@@ -1,0 +1,164 @@
+---
+description: Guide for generating release notes from Jira tickets using Atlassian MCP
+alwaysApply: true
+---
+
+# How to Create Release Notes from Jira Tickets
+
+This guide explains how to generate release notes from Jira tickets for Slack announcements.
+
+## Workflow Overview
+
+When a user requests release notes for a Jira ticket (e.g., "Make release notes for this JIRA-123"), follow these steps:
+
+## Step 1: Fetch the Jira Ticket
+
+1. **Extract the ticket identifier** from the user's request
+   - Look for patterns like: "JIRA-123", "PROJ-456", or ticket IDs
+   - The ticket key format is typically: `PROJECT-KEY-NUMBER`
+
+2. **Use Atlassian MCP to fetch the ticket**
+   - Use `mcp_atlassian_getJiraIssue` tool
+   - Required parameters:
+     - `cloudId`: Use `bikayiapp.atlassian.net` or extract from URL
+     - `issueIdOrKey`: The ticket key (e.g., "JIRA-123")
+   - Request additional fields if needed: `summary`, `description`, `status`, `labels`, `customfield_*`
+
+3. **Handle authentication**
+   - If MCP authentication fails, inform the user to check Atlassian MCP configuration
+   - Reference `.cursor/rules/atlassian-mcp.mdc` for troubleshooting
+
+## Step 2: Analyze the Ticket Content
+
+1. **Read and understand the ticket**
+   - Review the `summary` (title) to understand the main feature
+   - Read the `description` for detailed context
+   - Check `labels` and custom fields for additional context
+   - Identify the target audience (e.g., Product Managers, Store Owners)
+
+2. **Extract key information**
+   - Main feature/capability being added
+   - Primary use cases or problems solved
+   - Benefits or value proposition
+   - Any relevant technical details (if needed for context)
+
+3. **Identify the product/feature area**
+   - Determine which product this relates to (e.g., Manifest, BIK)
+   - Understand the scope and impact
+
+## Step 3: Create Release Notes
+
+Structure the release notes following this format:
+
+### Opening Statement
+- Start with a brief, user-friendly introduction
+- Focus on the value or capability being added
+- Use clear, non-technical language
+- Example structure: "We've added a new capability to help [target audience] [main benefit]."
+
+### What it does (:mag_right:)
+- List 2-3 bullet points explaining the functionality
+- Focus on what users can do, not how it's implemented
+- Use action-oriented language
+- Keep each point concise and clear
+
+### Example Use Cases (:bar_chart:)
+- Organize by product name (e.g., Manifest, BIK)
+- List 2-3 specific, real-world questions or scenarios
+- Use question format: "How many stores have [specific feature]?"
+- Make them concrete and relatable
+
+### Why it matters (:bulb:)
+- Provide 1-2 sentences explaining the value
+- Focus on benefits and impact
+- Connect to broader goals or outcomes
+- Keep it concise and meaningful
+
+## Step 4: Format for Slack
+
+1. **Use Slack-compatible formatting**
+   - Emoji codes: `:mag_right:`, `:bar_chart:`, `:bulb:`
+   - Use bullet points with proper indentation
+   - Ensure proper line breaks between sections
+   - Keep formatting clean and readable
+
+2. **Structure the output**
+   - Opening statement (1-2 sentences)
+   - Blank line
+   - `:mag_right: What it does` section
+   - Blank line
+   - `:bar_chart: Example Use Cases` section (with product names)
+   - Blank line
+   - `:bulb: Why it matters` section
+
+## Step 5: Output Text File
+
+1. **Create a text file**
+   - Save as `.txt` file in the workspace root or a designated location
+   - Use descriptive filename: `release-notes-{TICKET-KEY}.txt` or `release-notes-{DATE}.txt`
+   - Ensure the file is ready to copy-paste into Slack
+
+2. **File content requirements**
+   - Plain text format (no markdown syntax)
+   - Proper spacing and line breaks
+   - All emoji codes properly formatted
+   - Ready for direct copy-paste to Slack
+
+## Best Practices
+
+### Content Guidelines
+- **Be user-focused**: Write from the user's perspective, not technical implementation
+- **Be concise**: Keep each section brief and scannable
+- **Be specific**: Use concrete examples rather than vague descriptions
+- **Be clear**: Avoid jargon and technical terms when possible
+- **Be relevant**: Focus on what matters to the target audience
+
+### Tone and Style
+- Use friendly, professional tone
+- Write in present tense ("We've added" not "We added")
+- Use active voice
+- Keep sentences short and clear
+- Make it easy to scan quickly
+
+### Quality Checks
+- Verify all information is accurate from the Jira ticket
+- Ensure examples are realistic and relevant
+- Check that the value proposition is clear
+- Confirm formatting will work in Slack
+- Review for typos and clarity
+
+## Troubleshooting
+
+### If ticket information is incomplete
+- Extract what's available from the ticket
+- Use reasonable inferences based on ticket context
+- Note any assumptions made
+- Ask user for clarification if critical information is missing
+
+### If MCP is unavailable
+- Inform user to check Atlassian MCP configuration
+- Reference `.cursor/rules/atlassian-mcp.mdc` for setup
+- Suggest manual ticket lookup as alternative
+
+### If ticket format is unclear
+- Focus on the summary and description fields
+- Look for acceptance criteria or user stories
+- Extract key features from technical details
+- Ask user for additional context if needed
+
+## Example Workflow
+
+1. User: "Make release notes for JIRA-123"
+2. Fetch ticket using `mcp_atlassian_getJiraIssue`
+3. Analyze summary, description, and related fields
+4. Extract key features and use cases
+5. Structure release notes following the format
+6. Create `release-notes-JIRA-123.txt` file
+7. Present the file to user for review
+
+## Notes
+
+- Always verify the ticket exists and is accessible
+- If multiple tickets are mentioned, create separate release notes for each
+- For epic tickets, consider breaking down into multiple release notes for individual features
+- Keep the release notes focused on user value, not technical implementation details

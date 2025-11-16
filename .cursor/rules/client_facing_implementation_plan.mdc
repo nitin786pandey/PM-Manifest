@@ -1,0 +1,77 @@
+---
+description: Guide for drafting client-facing implementation plans
+alwaysApply: false
+---
+
+# Writing Client-Facing Implementation Plans
+
+Use this rule whenever you must turn internal project details into a polished implementation plan ready to share with a client. The goal is to establish shared understanding, surface dependencies early, and build trust through clarity and transparency.
+
+## Preparation Checklist
+- Confirm problem statement, desired outcomes, and success metrics with the internal team.
+- Gather scope boundaries, known assumptions, constraints, and in-scope/out-of-scope items.
+- Identify all internal and client stakeholders, their roles, escalation paths, and availability.
+- Collect the latest project timeline, milestone targets, resource assignments, and budget expectations.
+- Inventory solution components (products, integrations, data flows) and any prerequisite client tasks.
+
+## Required Plan Structure
+1. **Executive Summary**
+   - One or two paragraphs summarizing purpose, value to the client, and high-level approach.
+   - Mention business outcomes and success metrics the plan supports.
+2. **Objectives & Success Criteria**
+   - List measurable objectives tied to client goals.
+   - Define the metrics, target thresholds, and measurement cadence.
+3. **Scope & Assumptions**
+   - Detail what is included, excluded, and deferred.
+   - Call out assumptions, constraints, and dependencies on client-side readiness.
+4. **Stakeholders, Roles, & Governance**
+   - Provide a RACI or clear role table covering both teams.
+   - Add escalation paths, decision owners, and required approvals.
+5. **Implementation Phases, Tasks, & Milestones**
+   - Break the plan into phases (e.g., Discovery, Configuration, Testing, Launch, Optimization).
+   - For each phase list key tasks, owners, start/end dates, dependencies, and milestone acceptance criteria.
+6. **Resource & Environment Plan**
+   - Specify staffing (internal + client), tools, environments, and access requirements.
+   - Note onboarding steps, credential needs, and procurement timelines.
+7. **Communication & Reporting Cadence**
+   - Define meeting types, frequency, participants, and agendas.
+   - Explain update formats (dashboards, status emails) and feedback channels.
+8. **Risk & Issue Management**
+   - Identify top risks with probability, impact, mitigation, and contingency plans.
+   - Describe the process for logging, tracking, and resolving issues.
+9. **Change Management, Training, & Adoption**
+   - Outline change impacts, training plans, knowledge-transfer artifacts, and adoption KPIs.
+   - Include client responsibilities for champion enablement or communications.
+10. **Testing & Acceptance**
+    - Document test strategy, required data, entry/exit criteria, and sign-off process.
+    - Capture go/no-go checkpoints and rollback expectations.
+11. **Go-Live & Post-Launch Support**
+    - Detail cutover steps, support coverage (hours, channels, SLAs), and hypercare period.
+    - Specify transition to steady-state support and handover deliverables.
+12. **Client Action Items & Next Steps**
+    - Summarize immediate client tasks with owners and due dates.
+    - Highlight upcoming decision points and materials needed.
+
+## Writing Guidelines
+- **Client-first tone**: Focus on outcomes, value, and clarity; avoid internal jargon.
+- **Transparency**: Surface assumptions, dependencies, and risks; show how you will manage them.
+- **Tailoring**: Customize language, metrics, and timelines to the client’s industry, maturity, and priorities.
+- **Precision**: Use specific dates, names, and measurable targets; avoid vague phrases.
+- **Readability**: Favor short paragraphs, tables for schedules, and bullet lists for tasks.
+- **Traceability**: Align every task and milestone back to objectives and success criteria.
+- **Flexibility**: Note where the plan can adapt (e.g., optional phases, buffer windows) and how change requests will be handled.
+- **Visual aids**: When possible, include timelines, responsibility matrices, or swimlanes for clarity.
+
+## Quality Review Before Sharing
+- Verify timeline logic (no orphaned tasks, realistic sequencing, noted dependencies).
+- Confirm every stakeholder has clear responsibilities and communication expectations.
+- Ensure risks have mitigation owners and the client knows their obligations.
+- Double-check all acronyms, technical terms, and tool names are explained or linked to glossaries.
+- Validate the plan against contractual commitments, scope, and budget.
+- Proofread for consistency in tense, capitalization, and formatting.
+- Provide a concise cover email or summary slide that reiterates purpose, key dates, and immediate asks.
+
+## Ongoing Maintenance
+- Update the plan after every major decision, scope change, or timeline shift.
+- Version control changes and log rationale.
+- Highlight updates during recurring status calls and document client approvals.

@@ -1,0 +1,243 @@
+Rule Name: agentic-elastic-analytics (updated)
+Description: Agentic workflow to analyze Manifest events using Elasticsearch via curl/Python, with schema discovery, counter-event detection, DSL building, execution, and concise per-step updates.
+
+## Scope
+- Indices: `manifest-events-prod-alias` (default; overrideable)
+- Time field: `createdAt`
+- Events (examples): `widgetVisitedSession`, `widgetClickedSession`, `checkoutCompleted`, etc.
+- Auth: `Authorization: ApiKey $ELASTIC_API_KEY`
+
+## Core Principles
+1) Start with schema discovery for the target events before building queries.
+2) Detect counter events: if `eventProperties.count` exists for an event, treat it as a counter and aggregate with `sum(eventProperties.count)`, not document counts.
+3) Prefer aggregations (`size: 0`) for performance; only fetch sample docs when mappings are restricted.
+4) Provide brief status updates (1–2 lines) for each step, including high-level description of the DSL used.
+
+## Step-by-Step Workflow
+1) Clarify question (if ambiguous)
+	- Time window, store scope, target eventNames, granularity (daily/weekly/monthly).
+	- Default: last 7d, alias `manifest-events-prod-alias`.
+	- Status update: “Clarified scope: last 7d, storeId=..., events=[...].”
+
+2) Discover eventProperties and event type (counter vs non-counter)
+	- Attempt mapping:
+		- GET `{indices}/_mapping`
+		- Check `mappings.properties.eventProperties.properties` for `count`.
+	- If mapping forbidden (403), sample hits:
+		- DSL:
+```
+{
+  "size": 50,
+  "track_total_hits": true,
+  "query": { "bool": { "filter": [
+    { "term": { "eventName.keyword": "<EVENT>" } },
+    { "term": { "storeId.keyword": "<STORE_ID>" } },
+    { "range": { "createdAt": { "gte": "<GTE>", "lte": "<LTE>" } } }
+  ] } },
+  "sort": [ { "createdAt": { "order": "desc" } } ]
+}
+```
+		- Union keys from `_source.eventProperties` across the sample.
+	- Counter detection rule:
+		- If `eventProperties.count` is present for the event, treat it as counter.
+	- Status update: “Discovered eventProperties for <EVENT>: [keys...]; detected type: counter|non-counter.”
+
+3) Build aggregations per event (visits, clicks, etc.)
+	- Non-counter event aggregation (count docs):
+```
+{
+  "track_total_hits": true,
+  "size": 0,
+  "query": { "bool": { "filter": [
+    { "term": { "eventName.keyword": "<EVENT>" } },
+    { "term": { "storeId.keyword": "<STORE_ID>" } },
+    { "range": { "createdAt": { "gte": "<GTE>", "lte": "<LTE>" } } }
+  ] } }
+}
+```
+	- Counter event aggregation (sum counts):
+```
+{
+  "track_total_hits": true,
+  "size": 0,
+  "query": { "bool": { "filter": [
+    { "term": { "eventName.keyword": "<EVENT>" } },
+    { "term": { "storeId.keyword": "<STORE_ID>" } },
+    { "range": { "createdAt": { "gte": "<GTE>", "lte": "<LTE>" } } }
+  ] } },
+  "aggs": {
+    "total_count": { "sum": { "field": "eventProperties.count" } }
+  }
+}
+```
+	- For timeseries, wrap with `date_histogram` and apply `value_count` or `sum` inside buckets accordingly.
+	- Status update: “Prepared DSL for <EVENT>: count|sum(eventProperties.count) over window.”
+
+4) Execute queries and compute metrics
+	- For interaction rate example:
+		- Visits = non-counter: total hits; counter: sum(eventProperties.count) for `widgetVisitedSession`.
+		- Clicks = non-counter: total hits; counter: sum(eventProperties.count) for `widgetClickedSession`.
+		- Interaction rate = Clicks / Visits × 100.
+	- Status update: “Executed queries: visits=<value>, clicks=<value>; interaction rate=<value>%.”
+
+5) Output expectations
+	- Provide concise summary and a small table (if time series requested).
+	- Note assumptions (e.g., counter detection result, missing fields).
+
+## Curl Templates
+- Base
+```
+curl -s -X POST "$ELASTIC_BASE_URL/<INDICES>/_search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: ApiKey $ELASTIC_API_KEY" \
+  -d @payload.json
+```
+- Mapping
+```
+curl -s -X GET "$ELASTIC_BASE_URL/<INDICES>/_mapping" \
+  -H "Authorization: ApiKey $ELASTIC_API_KEY"
+```
+
+## Python Snippets (optional)
+- Summation query build (counter)
+```python
+dsl = {
+  "track_total_hits": True,
+  "size": 0,
+  "query": {"bool": {"filter": [
+    {"term": {"eventName.keyword": event}},
+    {"term": {"storeId.keyword": store_id}},
+    {"range": {"createdAt": {"gte": gte, "lte": lte}}}
+  ]}},
+  "aggs": {"total_count": {"sum": {"field": "eventProperties.count"}}}
+}
+```
+
+## Safety and Performance
+- Prefer aggregations; avoid fetching unnecessary docs.
+- Use `.keyword` for exact term filters.
+- Use `track_total_hits: true` when counts matter.
+
+## Per-step Update Examples (1–2 lines)
+- “Discovered eventProperties for widgetVisitedSession: [count, eventIdentifier]; detected as counter.”
+- “Prepared counter DSL for visits: sum(eventProperties.count) over last 7d.”
+- “Executed clicks and visits queries; computed interaction rate = 30.33%.”
+
+---
+description: Agentic workflow to analyze Manifest events using Elasticsearch via curl + Python (pandas), with schema discovery, DSL building, and mid-run clarifications.
+alwaysApply: true
+---
+
+## Agentic Elasticsearch Analytics Rule
+
+This rule defines how the assistant should break down analytics questions, discover event schemas, build Elasticsearch queries, fetch data (via curl with ApiKey), convert results to pandas DataFrames, analyze them, and ask clarifying questions mid-run.
+
+### Context
+- Base URL: `https://elastic.kb.asia-south1.gcp.elastic-cloud.com`
+- Auth: `Authorization: ApiKey $ELASTIC_API_KEY`
+- Indices: `manifest-events-prod-alias,events-prod-alias,bik-internal-events`
+- Time field: `createdAt`
+- Events (examples, not exhaustive): `addToCart`, `checkoutCompleted`, `gptReceived`, `sent`, `widgetVisitedSession`, `widgetClickedSession`, `abandonedAProduct`, `pageViewed`, `productViewed`, `costIncurred`, `abandonedCartCreated`, `BROADCAST_DATA`, `customerCreated`, `SYNC_SINGLE_SEGMENT`, `leadGenerated`, `agentHandoverDone`, `customerCreatedViaManifest`, `linkClicked`, `buyerFeedback`, `GLOBAL_SEGMENT_SYNC`, `ACTIVATION_TILL_DATE_V2`, `nodeExecuted`, `SHOPIFY_REVENUE`, `PLAN_UPGRADE_NUDGE_SEEN`, `nodeTriggered`, `TESTING_PLAYGROUND_OPENED`, `WIDGET_TESTED`, `completedManifestQuiz`, `APP_INSTALLED`, `APP_UNINSTALLED`, `CUSTOM_DATA_ADDED`, `PLAN_SELECTED`, `PLAN_UPGRADE_NUDGE_CLICKED`, `WIDGET_SAVED_AS_DRAFT`, `CLIENT_CHURNED`, `ONBOARDING_STARTED`, `WIDGET_PUBLISHED`, `GPT Receieved`
+- Common properties (examples): `sessionId`, `storeId`, `intent`, `pageType`, `messageType`, `hasABExperimentationEnabled`, `hasContactInfo`, `content`, `messageSubType`, `isMerchantTesting`, `isSatisfactory`, `gptModel`, `isLinkSent`, `customerTone`, `widgetPublished`, `questionAsked`, `wasRecommended`, `wasClicked`, `appEmbedEnabled`, `lastInteractedTimeStamp`, `entryPointType`, `hasInteracted`, `isAbEnabled`, `noOfMessageCount`, `feSessionId`
+
+### Query Decomposition (Data Analyst mindset)
+1) Clarify terms up-front (ask user if ambiguous). Examples:
+	- “Interaction rate” definition?
+	- Merchant scope? (`storeId` all vs specific)
+	- Time window and granularity (daily/weekly/monthly)?
+	- Include AB experimentation, pageType breakdowns?
+2) Break into sub-questions:
+	- Volume: sessions started vs sessions with interactions vs clicks
+	- Quality: conversion rates (checkoutCompleted), add-to-cart, AOV
+	- Mix shifts: by `storeId`, `pageType`, AB flags
+	- Seasonality vs anomaly (compare rolling windows / YoY if available)
+3) Plan aggregations and data pulls before running.
+
+### Schema Strategy
+1) Use provided event names/properties.
+2) If unsure of a field, discover via mapping:
+	- GET `{index}/_mapping` and list candidate paths (especially `eventProperties.*`).
+3) Prefer `.keyword` fields for exact term filters (e.g., `eventName.keyword`).
+
+### DSL Templates
+- Base date range (UTC):
+```
+{
+  "track_total_hits": true,
+  "query": {
+    "bool": {
+      "filter": [
+        { "range": { "createdAt": { "gte": "now-90d/d", "lte": "now" } } }
+      ]
+    }
+  },
+  "size": 0
+}
+```
+- Filter event name:
+```
+{ "term": { "eventName.keyword": "checkoutCompleted" } }
+```
+- Example aggregations:
+	- Date histogram:
+```
+"aggs": {
+  "by_month": {
+    "date_histogram": { "field": "createdAt", "calendar_interval": "month" }
+  }
+}
+```
+	- Cardinality (unique sessions):
+```
+"aggs": { "unique_sessions": { "cardinality": { "field": "visitorSessionId.keyword" } } }
+```
+	- Sum numeric property:
+```
+"aggs": { "total_amount": { "sum": { "field": "eventProperties.totalAmountUSD" } } }
+```
+
+### curl Usage (ApiKey)
+Use environment variable `ELASTIC_API_KEY` and index patterns.
+```
+curl -s -X POST "$ELASTIC_BASE_URL/$INDICES/_search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: ApiKey $ELASTIC_API_KEY" \
+  -d @payload.json
+```
+Notes:
+- Set `INDICES="manifest-events-prod-alias,events-prod-alias,bik-internal-events"`
+- For pagination of large result sets, use `search_after` with a stable `sort`.
+- Prefer aggregations; avoid fetching unnecessary documents.
+
+### Python Utilities (scripts/)
+- `es_fetch.py`: Thin client to call Elasticsearch (search/mappings), handle pagination.
+- `es_to_df.py`: Convert hits to pandas DataFrame, flatten `_source` and `eventProperties`.
+- `manifest_analysis.py`: Metric computations (conversion rate, AOV, add-to-cart, contribution %, interaction rate).
+- `agent_runner.py`: Orchestrates clarifications → DSL build → fetch → DataFrame → analysis → answer.
+
+### Mid-run Clarifications
+- If a definition is ambiguous (e.g., “interaction rate”), ask the user:
+	- “Use default: sessions with `hasInteracted=true` divided by all sessions? (y/n)”
+- If property absent in mapping, propose nearest alternative and ask to confirm.
+- If results are sparse, ask to widen the window or adjust filters.
+
+### Metric Definitions (Guidance)
+- Sales Impact via Manifest:
+	- Total Store Sales: sum(`eventProperties.totalAmountUSD`) where `eventName=checkoutCompleted`
+	- Contribution %: Manifest-influenced sales / Total Store Sales
+- Interaction vs Non-Interaction:
+	- Conversion Rate (interacted): unique sessions with `checkoutCompleted` where `hasInteracted=true` divided by total sessions with interaction.
+	- Conversion Rate (non-interacted): unique sessions with `checkoutCompleted` where `hasInteracted=false` divided by total sessions without interaction.
+	- AOV measures: average `totalAmountUSD` over respective order sets.
+- Add to Carts Impact via Manifest: mirror above for `addToCart`.
+
+### Output Expectations
+- Provide a concise summary plus a small table for key metrics/time series.
+- Explain the main drivers (volume, mix, quality) behind changes.
+- Note confidence and any remaining assumptions.
+
+### Safety and Performance
+- Use `size: 0` with aggregations whenever possible.
+- Always set `track_total_hits: true` when counts matter.
+- Prefer `.keyword` for exact matches; avoid text fields in terms aggregations.
+

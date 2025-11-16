@@ -1,0 +1,154 @@
+---
+description: Guide for generating Customer Call Record documents as Notion pages using the four-quadrant framework
+alwaysApply: false
+---
+# Rule: Generating a Customer Call Record in Notion
+
+## Goal
+
+To guide an AI assistant in creating a detailed Customer Call Record as a Notion page in the "User Interviews" database, using the four-quadrant framework to analyze customer feedback. The record should be clear, actionable, and suitable for tracking customer interactions, product opportunities, and follow-ups.
+
+## Process
+
+1.  **Receive Initial Prompt:** The user provides a brief description or request for documenting a customer call (may include Fireflies transcript URL).
+2.  **Ask Clarifying Questions:** Before writing the record, the AI *must* ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the call, not necessarily the "how" (which the developer will figure out). Make sure to provide options in letter/number lists so I can respond easily with my selections.
+3.  **Analyze Using Four-Quadrant Framework:** Categorize customer feedback into:
+    - **Friction (Current Solution):** Pain or frustration with existing product/features
+    - **Stickiness (Current Solution):** Positive attachment to existing features
+    - **Motivation (New Solution):** Excitement/demand for new capabilities
+    - **Anxiety (New Solution):** Fear/hesitation about new features or changes
+4.  **Generate Markdown File:** Based on the initial prompt and the user's answers, create a Markdown file in Notion-flavored Markdown format. **DO NOT automatically create a Notion page** unless explicitly requested by the user. Save the file as `call-record-[customer-name-or-date].md` in the workspace root.
+5.  **Create Notion Page (Optional):** Only create a Notion page in the "User Interviews" database if the user explicitly requests it. Otherwise, provide the Markdown file for manual import.
+
+## Clarifying Questions (Examples)
+
+The AI should adapt its questions based on the prompt, but here are some common areas to explore:
+
+*   **Customer Information:** "What is the customer's name and company?"
+*   **Call Category:** "What category best describes this call?" (Feature Discovery, Feature/Product Feedback, Issue/Escalation, Query/Clarification, Strategic/Planning Discussion, Ad-hoc)
+*   **Pod:** "Which product pod is this related to?" (Campaign, Journey, Agentic AI, Helpdesk, Manifest)
+*   **PM:** "Which PM(s) should be assigned to this?" (Naimisha, Nitin, Ashutosh, Maneesh, Kunal)
+*   **Relevance:** "How relevant/urgent is this?" (Critical, High, Medium, Low)
+*   **Ecommerce Category:** "What ecommerce category does this customer belong to?" (Child Care, Travel accessories, Home & Kitchen Appliances, Fashion & Apparel)
+*   **Call Purpose:** "What was the main purpose or agenda of this call?"
+*   **Four-Quadrant Analysis:** "What friction points, stickiness factors, motivations, or anxieties were discussed?"
+*   **Action Items:** "What are the action items and who is responsible for each?"
+*   **Video/Transcript:** "Is there a video recording or transcript URL?"
+
+## Notion Database Structure
+
+The "User Interviews" database is located at: `collection://294d6d0e-f1b7-803e-bf2a-000b90e7dbca`
+
+### Required Properties
+
+1.  **Client Name** (Title): The customer/client name
+2.  **Date** (Date): Call date
+3.  **Category** (Multi-select): One or more of:
+    - Feature Discovery
+    - Feature/Product Feedback
+    - Issue/Escalation
+    - Query/Clarification
+    - Strategic/ Planning discussion
+    - Ad-hoc
+4.  **Pod** (Multi-select): One or more of:
+    - Campaign
+    - Journey
+    - Agentic AI
+    - Helpdesk
+    - Manifest
+5.  **PM** (Multi-select): One or more of:
+    - Naimisha
+    - Nitin
+    - Ashutosh
+    - Maneesh
+    - Kunal
+6.  **Relevance** (Select): One of:
+    - Critical
+    - High
+    - Medium
+    - Low
+
+### Optional Properties
+
+7.  **Objective** (Text): The main objective or agenda for the call
+8.  **Friction (Current Solution)** (Text): Pain points or frustrations with existing product/features
+9.  **Stickiness (Current Solution)** (Text): Positive feedback about existing features that work well
+10. **Anxiety (New Solution)** (Text): Concerns, fears, or hesitations about new features or changes
+11. **Motivation (New Solution)** (Text): Excitement, demand, or pull for new capabilities
+12. **Action Items** (Text): List of action items with owners and due dates
+13. **Video Recording** (Text): URL to video recording or transcript (e.g., Fireflies link)
+14. **Ecommerce Category** (Select): One of:
+    - Child Care
+    - Travel accessories
+    - Home & Kitchen Appliances
+    - Fashion & Apparel
+
+## Four-Quadrant Framework
+
+Every piece of client feedback should be categorized into one or more quadrants:
+
+| | **Current Solution** | **New Solution** |
+|---|---|---|
+| **Positive Emotion** | **Stickiness** | **Motivation** |
+| **Negative Emotion** | **Friction** | **Anxiety** |
+
+### 1. Friction (Current Solution)
+- Pain or frustration with how current product/features operate
+- Signals usability issues, incomplete needs, or broken experiences
+- **Action Lens:** Prioritize friction removal before adding new features
+
+### 2. Stickiness (Current Solution)
+- Positive attachment to existing product features or habits
+- Signals areas of delight, habit formation, or core value delivery
+- **Action Lens:** Double down — improve, showcase, and replicate
+
+### 3. Motivation (New Solution)
+- Excitement, curiosity, or demand for new capabilities
+- Reflects growth potential and client pull for innovation
+- **Action Lens:** Explore concept → validate → prototype → test adoption
+
+### 4. Anxiety (New Solution)
+- Fear, hesitation, or uncertainty about new features or changes
+- Signals trust deficit, lack of clarity, or onboarding gaps
+- **Action Lens:** Build confidence through UI clarity, education, and safeguards
+
+## Content Structure
+
+The Notion page content should include:
+
+1. **Video/Transcript Link** (if available): Link to Fireflies recording or transcript
+2. **Call Overview:** Participants, duration, meeting link
+3. **Key Discussion Points:** Detailed notes organized by topic
+4. **Four-Quadrant Analysis:** Structured feedback categorized into the four quadrants
+5. **Decisions Made:** Any decisions, agreements, or commitments
+6. **Action Items:** Detailed list with owners and due dates
+7. **Next Steps:** Planned follow-up actions and timeline
+
+## Target Audience
+
+Assume the primary reader is a **team member** (PM, engineer, sales, success) who needs to:
+- Understand the call context
+- Identify product opportunities
+- Recognize adoption blockers and anxiety triggers
+- Understand emotional drivers behind feedback
+- Follow up on action items
+
+## Output
+
+*   **Primary Format:** Markdown file in Notion-flavored Markdown format
+*   **File Location:** `call-record-[customer-name-or-date].md` in workspace root
+*   **Notion Database Location (if manually imported):** `collection://294d6d0e-f1b7-803e-bf2a-000b90e7dbca`
+*   **Parent Page (if manually imported):** Customer conversations (https://www.notion.so/160d6d0ef1b780828f73dbdf354d71c6)
+*   **Notion Page Creation:** Only create Notion page if user explicitly requests it
+
+## Final Instructions
+
+1. Do NOT start implementing any features mentioned in the call record
+2. Make sure to ask the user clarifying questions before creating the call record
+3. **DO NOT automatically create a Notion page** - only create a Markdown file in Notion-flavored Markdown format
+4. Only use the Notion MCP `notion-create-pages` tool if the user explicitly requests creating a Notion page
+5. Map all call information to the appropriate structure that matches Notion database properties
+6. Apply the four-quadrant framework to categorize customer feedback
+7. Include the video/transcript URL in the content if available
+8. Use Notion-flavored Markdown for the file content
+9. Save the file as `call-record-[customer-name-or-date].md` in the workspace root

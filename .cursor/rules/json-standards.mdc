@@ -1,0 +1,37 @@
+---
+description: JSON formatting and structure standards
+globs: ["**/*.json"]
+alwaysApply: false
+---
+
+# JSON Standards
+
+## Formatting
+
+- Use **4-space indentation**
+- Preserve Jira structure when working with Jira data
+- Validate JSON syntax before saving
+- Use consistent formatting throughout
+
+## Data Handling
+
+- Preserve Jira JSON structure
+- Handle nested fields appropriately
+- Handle nulls and missing fields gracefully
+- Validate data structure before processing
+
+## Example
+
+```json
+{
+    "issueKey": "PROJ-123",
+    "createdDate": "2024-01-15T10:30:00Z",
+    "summary": "Issue summary",
+    "fields": {
+        "description": "Issue description",
+        "status": {
+            "name": "In Progress"
+        }
+    }
+}
+```

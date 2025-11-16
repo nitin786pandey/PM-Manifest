@@ -1,0 +1,439 @@
+---
+description: Guide for creating Notion pages using Notion-flavored Markdown and MCP tools
+alwaysApply: true
+---
+
+# Creating Notion Pages
+
+This rule provides comprehensive guidance for creating Notion pages using Notion-flavored Markdown format and the Notion MCP tools.
+
+## Overview
+
+When asked to create a Notion page, you must:
+1. Use **Notion-flavored Markdown** format for all page content
+2. Use the appropriate **Notion MCP tools** (`notion-create-pages`, `notion-update-page`, etc.)
+3. Follow the **Notion-flavored Markdown specification** below
+4. Structure content properly with correct indentation (use tabs, not spaces)
+5. Include proper properties when creating pages in databases
+
+## Notion MCP Tools
+
+### Available Tools
+- `notion-create-pages`: Create new pages
+- `notion-update-page`: Update existing pages
+- `notion-fetch`: Retrieve page/database content
+- `notion-search`: Search for pages and content
+- `notion-move-pages`: Move pages to new parents
+- `notion-duplicate-page`: Duplicate existing pages
+
+### When Creating Pages
+
+**For pages in databases:**
+- Use `data_source_id` as parent (from `collection://` URL)
+- Always include a title property (check schema for exact property name)
+- Use expanded format for date properties:
+  - `"date:PropertyName:start": "YYYY-MM-DD"`
+  - `"date:PropertyName:is_datetime": 0` (for date only) or `1` (for datetime)
+- For checkboxes: Use `"__YES__"` for checked, `"__NO__"` for unchecked
+- For multi-select/select: Use exact option names from schema
+
+**For standalone pages:**
+- Use `page_id` as parent (if creating under a page)
+- Only `title` property is allowed (in inline markdown format)
+
+## Notion-flavored Markdown Specification
+
+### Basic Formatting Rules
+
+- **Indentation**: Use **tabs** (not spaces) for indentation
+- **Escaping**: Use backslashes to escape special characters (e.g., `\*` renders as `*`)
+- **Block colors**: Add `{color="Color"}` attribute list to the first line of any block
+
+### Basic Block Types
+
+**Text:**
+```
+Rich text {color="Color"}
+	Children (indented with tabs)
+```
+
+**Headings:**
+```
+# Rich text {color="Color"}
+## Rich text {color="Color"}
+### Rich text {color="Color"}
+```
+Note: Headings 4, 5, and 6 are not supported and will be converted to heading 3.
+
+**Bulleted List:**
+```
+- Rich text {color="Color"}
+	Children (indented with tabs)
+```
+Important: List items must contain inline rich text, otherwise they render as empty.
+
+**Numbered List:**
+```
+1. Rich text {color="Color"}
+	Children (indented with tabs)
+```
+
+### Rich Text Formatting
+
+- **Bold**: `**Rich text**`
+- **Italic**: `*Rich text*`
+- **Strikethrough**: `~~Rich text~~`
+- **Underline**: `<span underline="true">Rich text</span>`
+- **Inline code**: `` `Code` ``
+- **Link**: `[Link text](URL)`
+- **Citation**: `[^URL]` or `[^{{1}}]` for compressed URLs
+- **Colored text**: `<span color="Color">Rich text</span>`
+- **Inline math**: `$Equation$` (must have whitespace before and after)
+- **Line break**: `<br>` (for multi-line blocks)
+
+### Colors
+
+**Text colors** (colored text with transparent background):
+- `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, `red`
+
+**Background colors** (colored background with contrasting text):
+- `gray_bg`, `brown_bg`, `orange_bg`, `yellow_bg`, `green_bg`, `blue_bg`, `purple_bg`, `pink_bg`, `red_bg`
+
+**Usage:**
+- Block colors: Add `{color="Color"}` to the first line of any block
+- Rich text colors: Use `<span color="Color">Rich text</span>`
+
+### Mentions
+
+**User mention:**
+```
+<mention-user url="{{URL}}">User name</mention-user>
+```
+or self-closing: `<mention-user url="{{URL}}"/>`
+
+**Page mention:**
+```
+<mention-page url="{{URL}}">Page title</mention-page>
+```
+
+**Database mention:**
+```
+<mention-database url="{{URL}}">Database name</mention-database>
+```
+
+**Data source mention:**
+```
+<mention-data-source url="{{URL}}">Data source name</mention-data-source>
+```
+
+**Date mention:**
+```
+<mention-date start="YYYY-MM-DD" end="YYYY-MM-DD"/>
+<mention-date start="YYYY-MM-DDThh:mm:ssZ" end="YYYY-MM-DDThh:mm:ssZ"/>
+```
+
+**Custom emoji:**
+```
+:emoji_name:
+```
+
+### Advanced Block Types
+
+**Quote:**
+```
+> Rich text {color="Color"}
+	Children
+```
+For multi-line quotes, use `<br>` for line breaks:
+```
+> Line 1<br>Line 2<br>Line 3 {color="Color"}
+```
+
+**To-do:**
+```
+- [ ] Rich text {color="Color"}
+	Children
+- [x] Rich text {color="Color"}
+	Children
+```
+
+**Toggle:**
+```
+▶ Rich text {color="Color"}
+	Children (must be indented to be toggleable)
+```
+
+**Toggle headings:**
+```
+▶# Rich text {color="Color"}
+▶## Rich text {color="Color"}
+▶### Rich text {color="Color"}
+```
+
+**Divider:**
+```
+---
+```
+
+**Table:**
+```
+<table fit-page-width?="true|false" header-row?="true|false" header-column?="true|false">
+	<colgroup>
+		<col color?="Color">
+		<col color?="Color">
+	</colgroup>
+	<tr color?="Color">
+		<td>Data cell</td>
+		<td color?="Color">Data cell</td>
+	</tr>
+	<tr>
+		<td>Data cell</td>
+		<td>Data cell</td>
+	</tr>
+</table>
+```
+Note: Format text inside table cells using Notion-flavored Markdown, not HTML.
+
+**Equation:**
+```
+$$
+Equation
+$$
+```
+
+**Code block:**
+````
+```language
+Code
+```
+````
+
+**Callout:**
+```
+<callout icon?="emoji" color?="Color">
+	Rich text
+	Children (indented)
+</callout>
+```
+Note: Use Notion-flavored Markdown for formatting inside callouts, not HTML.
+
+**Columns:**
+```
+<columns>
+	<column>
+		Children
+	</column>
+	<column>
+		Children
+	</column>
+</columns>
+```
+
+**Page (sub-page):**
+```
+<page url="{{URL}}" color?="Color">Title</page>
+```
+Warning: Using `<page>` with an existing URL will MOVE the page. Use `<mention-page>` to just mention it.
+
+**Database:**
+```
+<database url?="{{URL}}" inline?="{true|false}" icon?="Emoji" color?="Color" data-source-url?="{{URL}}">Title</database>
+```
+- Use `url` to move an existing database
+- Use `data-source-url` to create a linked database view
+- Omit both to create a new database
+
+**Media blocks:**
+```
+<audio source="{{URL}}" color?="Color">Caption</audio>
+<file source="{{URL}}" color?="Color">Caption</file>
+<image source="{{URL}}" color?="Color">Caption</image>
+<pdf source="{{URL}}" color?="Color">Caption</pdf>
+<video source="{{URL}}" color?="Color">Caption</video>
+```
+Note: Source URLs can be compressed (`{{1}}`) or full URLs (`example.com`), but NOT `{{https://example.com}}`.
+
+**Table of contents:**
+```
+<table_of_contents color?="Color"/>
+```
+
+**Synced block:**
+```
+<synced_block url?="{{URL}}">
+	Children
+</synced_block>
+```
+Note: Omit `url` when creating new synced blocks.
+
+**Synced block reference:**
+```
+<synced_block_reference url="{{URL}}">
+	Children
+</synced_block_reference>
+```
+
+**Meeting notes:**
+```
+<meeting-notes>
+	Rich text (meeting title)
+	<summary>
+		AI-generated summary
+	</summary>
+	<notes>
+		User notes
+	</notes>
+	<transcript>
+		Transcript (cannot be edited by AI)
+	</transcript>
+</meeting-notes>
+```
+Important:
+- When creating new meeting notes, omit `<summary>` and `<transcript>` tags
+- Only include `<notes>` if user specifically requests it
+- All content within tags must be indented at least one level deeper
+
+## Best Practices
+
+### Content Structure
+1. **Start with clear headings** - Use H1 for main title, H2 for major sections
+2. **Use proper indentation** - Always use tabs for nested content
+3. **Include rich text** - List items and blocks should have inline text
+4. **Use colors strategically** - Apply colors to highlight important content
+5. **Link related content** - Use mentions to connect pages, databases, and users
+
+### Formatting Guidelines
+1. **Use Markdown, not HTML** - For text formatting in tables, callouts, etc., use `**bold**` not `<strong>`
+2. **Escape special characters** - Use backslashes when needed (`\*` for literal asterisk)
+3. **Proper spacing** - Ensure whitespace around inline math (`$equation$`)
+4. **Indent children** - All child blocks must be properly indented with tabs
+
+### Property Handling
+1. **Check schema first** - Always fetch database schema to get exact property names
+2. **Use expanded date format** - For date properties: `"date:PropertyName:start"`, `"date:PropertyName:is_datetime"`
+3. **Exact option names** - Use exact option names for select/multi-select properties
+4. **Checkbox format** - Use `"__YES__"` or `"__NO__"` for checkbox properties
+5. **Title property** - Always include title property (may not be named "title" - check schema)
+
+### Error Prevention
+1. **Don't move pages accidentally** - Use `<mention-page>` not `<page url="...">` to reference existing pages
+2. **Don't edit transcripts** - Never attempt to edit `<transcript>` tags in meeting notes
+3. **Proper URL format** - Don't use `{{https://...}}` for media sources
+4. **Indent toggle children** - Toggle blocks require indented children to work properly
+5. **Avoid empty blocks** - List items and quotes should have content
+
+## Workflow
+
+### Step 1: Determine Page Type
+- Standalone page (under a page or workspace)
+- Database page (in a database/data source)
+
+### Step 2: Gather Requirements
+- If database page: Fetch database schema to get property names and types
+- Identify parent (page_id, database_id, or data_source_id)
+- Collect all content and properties
+
+### Step 3: Format Content
+- Write content in Notion-flavored Markdown
+- Use tabs for indentation
+- Apply proper formatting (headings, lists, rich text)
+- Add colors and mentions as needed
+
+### Step 4: Create Page
+- Use `notion-create-pages` tool
+- Set appropriate parent
+- Include all properties with correct format
+- Provide content in `content` field (Notion-flavored Markdown)
+
+### Step 5: Verify
+- Check that page was created successfully
+- Verify properties are set correctly
+- Confirm content formatting is correct
+
+## Examples
+
+### Example 1: Simple Standalone Page
+```markdown
+# Project Overview
+
+This is a **simple page** with basic formatting.
+
+## Key Points
+- Point 1
+- Point 2
+```
+
+### Example 2: Page with Advanced Blocks
+```markdown
+# Product Roadmap
+
+## Q1 Features
+
+<callout icon="🚀" color="blue">
+	**New Feature Launch**
+	This feature will be released in Q1
+</callout>
+
+### Tasks
+- [ ] Design mockups
+- [x] Technical specification
+- [ ] Development
+
+▶ Implementation Details
+	We'll use React for the frontend.
+	Backend will be built with Node.js.
+```
+
+### Example 3: Page with Table
+```markdown
+# Project Status
+
+<table header-row="true">
+	<tr>
+		<td>**Task**</td>
+		<td>**Status**</td>
+		<td>**Owner**</td>
+	</tr>
+	<tr>
+		<td>Design</td>
+		<td>In Progress</td>
+		<td>John</td>
+	</tr>
+	<tr>
+		<td>Development</td>
+		<td>Not Started</td>
+		<td>Jane</td>
+	</tr>
+</table>
+```
+
+## Important Notes
+
+1. **Always use tabs** for indentation, never spaces
+2. **Fetch database schema** before creating database pages to get exact property names
+3. **Use Notion-flavored Markdown** for all content, not standard Markdown
+4. **Test complex structures** - Some advanced blocks may need adjustment
+5. **Reference existing pages** - Use `notion-fetch` to see examples of properly formatted content
+6. **Don't include page title** in content - Only include it in the `title` property
+
+## Troubleshooting
+
+**Issue: Page created but formatting looks wrong**
+- Check indentation (must use tabs)
+- Verify block syntax matches specification
+- Ensure list items have inline text
+
+**Issue: Properties not set correctly**
+- Fetch database schema to verify property names
+- Check date format (use expanded format)
+- Verify select/multi-select option names match exactly
+
+**Issue: Mentions not working**
+- Ensure URLs are in correct format (`{{URL}}` or full URL)
+- Verify referenced pages/databases exist
+- Check URL format (no `{{https://...}}`)
+
+**Issue: Advanced blocks not rendering**
+- Check indentation of children (must be indented)
+- Verify XML syntax is correct
+- Ensure all required attributes are present

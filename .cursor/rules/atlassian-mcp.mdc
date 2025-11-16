@@ -1,0 +1,83 @@
+---
+description: Used to Interact with Jira , to Search , fetch and update Jira issues .
+alwaysApply: false
+---
+# Atlassian MCP Configuration
+
+## Configuration
+
+**Config file**: `~/.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"]
+    }
+  }
+}
+```
+
+## Authentication
+
+- **Method**: OAuth 2.1 via browser
+- **Target**: bik.atlassian.net
+- **Redirect URI**: `http://localhost:3334/oauth/callback`
+
+## Operations
+
+**Cloud ID**: Use `bikayiapp.atlassian.net` or full URL `https://...`
+
+### 1. Fetch Issue
+```javascript
+getJiraIssue({cloudId, issueIdOrKey})
+```
+
+### 2. Update Issue
+```javascript
+editJiraIssue({
+  cloudId,
+  issueIdOrKey,
+  fields: {description: "markdown"}
+})
+```
+
+### 3. Search Issues
+```javascript
+searchJiraIssuesUsingJql({
+  cloudId,
+  jql,
+  maxResults
+})
+```
+
+## Markdown Formatting
+
+- Use Markdown directly in descriptions
+- Jira wiki format uses `*text*` for italic
+- Code blocks use `{code:lang}` format in wiki mode
+
+## Troubleshooting
+
+### Repeated Authentication Prompts
+
+**Known Issue**: Atlassian MCP may trigger OAuth repeatedly due to token expiry/refresh issues
+
+**Solutions**:
+1. Close multiple Cursor windows/projects (each triggers separate auth)
+2. Clear browser cache/cookies for Atlassian OAuth
+3. Ensure redirect URI `http://localhost:3334/oauth/callback` is allowed
+4. Check for pop-up blockers interfering with OAuth flow
+5. Re-authenticate once and allow token to persist
+
+**Workaround**: Use JQL REST API as fallback if MCP auth fails repeatedly
+
+## Legacy Fallback
+
+Use JQL via REST API as fallback:
+
+```bash
+curl -s --netrc -G --data-urlencode 'jql=summary ~ "name"' \
+  https://bikayiapp.atlassian.net/rest/api/2/search
+```

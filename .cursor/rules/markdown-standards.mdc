@@ -1,0 +1,43 @@
+---
+description: Markdown formatting standards and structure guidelines
+globs: ["**/*.md", "**/*.mdc"]
+alwaysApply: false
+---
+
+# Markdown Standards
+
+## Structure
+
+- Use appropriate **headings** (H1, H2, H3) to organize content
+- Include **metadata** when relevant (key, dates, status)
+- Use **tables** for structured data
+- Use **code blocks** with language tags for code examples
+
+## Content Organization
+
+- Start with a clear title (H1)
+- Use H2 for major sections
+- Use H3 for subsections
+- Include metadata at the top when applicable
+
+## Example
+
+```markdown
+# Issue Summary: PROJ-123
+
+**Key**: PROJ-123  
+**Created**: 2024-01-15  
+**Status**: In Progress
+
+## Overview
+Brief description of the issue.
+
+## Details
+Detailed information about the issue.
+
+## Code Example
+\`\`\`python
+def example():
+    pass
+\`\`\`
+```

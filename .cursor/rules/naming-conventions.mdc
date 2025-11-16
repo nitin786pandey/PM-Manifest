@@ -1,0 +1,19 @@
+---
+description: File and document naming conventions for the project
+alwaysApply: false
+---
+# Naming Conventions
+
+## File Naming
+
+- **General files**: Use lowercase_underscore format (e.g., `recent_7days_issues.json`)
+- **Summary files**: Use format `{TICKET_KEY}_{desc}.md` (e.g., `PROJ-123_feature_analysis.md`)
+- **JSON files**: Use format `{desc}_{timeframe}.json` (e.g., `issues_last_week.json`)
+
+## Examples
+
+- ✅ `recent_7days_issues.json`
+- ✅ `PROJ-456_user_feedback.md`
+- ✅ `sprint_data_q1_2024.json`
+- ❌ `Recent7DaysIssues.json` (wrong format)
+- ❌ `proj-123.md` (missing description)

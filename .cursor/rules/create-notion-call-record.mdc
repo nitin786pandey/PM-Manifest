@@ -1,0 +1,268 @@
+---
+description: Guide for converting customer call transcripts into structured Notion pages using the four-quadrant framework
+alwaysApply: false
+---
+
+# Creating Notion Pages from Customer Call Transcripts
+
+This rule guides the AI assistant in analyzing customer call transcripts and creating structured Notion pages in the "User Interviews" database following the established framework.
+
+## Overview
+
+When provided with a customer call transcript, the AI must:
+1. Analyze the conversation using the four-quadrant framework
+2. Categorize the conversation type
+3. Extract all relevant information
+4. Create a properly structured Markdown file in Notion-flavored Markdown format
+5. **DO NOT automatically create a Notion page** unless explicitly requested by the user
+
+## Database Information
+
+**Database URL**: `https://www.notion.so/294d6d0ef1b7802d9942c1e437b059f3`  
+**Data Source URL**: `collection://294d6d0e-f1b7-803e-bf2a-000b90e7dbca`  
+**Parent Page**: Customer conversations (`https://www.notion.so/160d6d0ef1b780828f73dbdf354d71c6`)
+
+## Required Properties
+
+When creating a Notion page, you must populate these properties:
+
+### Required Fields
+- **Client Name** (title): The name of the client/company
+- **Date** (date): Date of the call (use `date:Date:start` format)
+- **Objective** (text): Brief summary of the call's main objective
+
+### Four-Quadrant Framework Fields
+- **Friction (Current Solution)** (text): Pain points with existing product/features
+- **Stickiness (Current Solution)** (text): Positive aspects of current solution
+- **Motivation (New Solution)** (text): Excitement/demand for new capabilities
+- **Anxiety (New Solution)** (text): Concerns/fears about new features/changes
+
+### Categorization Fields
+- **Category** (multi-select): One or more of:
+  - "Feature Discovery"
+  - "Feature/Product Feedback"
+  - "Issue/Escalation"
+  - "Query/Clarification"
+  - "Strategic/ Planning discusion"
+  - "Ad-hoc"
+- **Relevance** (select): One of "Critical", "High", "Medium", "Low"
+
+### Additional Fields
+- **Action Items** (text): Bulleted list of action items with owners and due dates
+- **PM** (multi-select): One or more of "Naimisha", "Nitin", "Ashutosh", "Maneesh", "Kunal"
+- **Pod** (multi-select): One or more of "Campaign", "Journey", "Agentic AI", "Helpdesk", "Manifest"
+- **Ecommerce Category** (select): One of "Child Care", "Travel accessories", "Home & Kitchen Appliances", "Fashion & Apparel"
+- **Video Recording** (text): URL to call recording if available
+- **Migrated From** (multi-select): If applicable, one or more of "Verifast", "Chat360", "Bitespeed"
+
+## Four-Quadrant Framework Analysis
+
+### 1. Current Solution Friction
+**What to extract:**
+- Pain points, frustrations, or complaints about existing features
+- Usability issues or broken experiences
+- Operational inefficiencies
+- Statements indicating retention risk
+
+**Examples:**
+- "Setting up automations takes too long"
+- "Our emails keep landing in spam"
+- "Agents can't find old conversations easily"
+- "We need to go through each and every conversation manually"
+
+**Writing style:**
+- Write in narrative form explaining the friction
+- Include direct quotes when impactful
+- Explain the underlying problem, not just the symptom
+- Connect to business impact when possible
+
+### 2. Current Solution Stickiness
+**What to extract:**
+- Positive feedback about existing features
+- Features that create delight or habit formation
+- Core value delivery points
+- Areas of strong adoption
+
+**Examples:**
+- "We love how AI replies sound human — saves time"
+- "Broadcast reports are so easy to read"
+- "Your product tagging in Shopify helps us segment fast"
+
+**Writing style:**
+- Highlight what's working well
+- Note features that drive retention
+- Identify anchor features worth amplifying
+
+### 3. New Solution Motivation
+**What to extract:**
+- Requests for new features or capabilities
+- Excitement about proposed solutions
+- Growth opportunities
+- Market direction indicators
+
+**Examples:**
+- "Can we have AI generate campaign ideas based on festivals?"
+- "If you add WhatsApp calling, we'll move all our leads there"
+- "We'd love a dashboard that shows ROI by channel"
+
+**Writing style:**
+- Capture the excitement and potential
+- Note the business value or competitive advantage
+- Highlight features that could drive expansion
+
+### 4. New Solution Anxiety
+**What to extract:**
+- Concerns about new features or changes
+- Trust issues or uncertainty
+- Fear of negative impact
+- Onboarding or clarity gaps
+
+**Examples:**
+- "Will AI messages go live without approval?"
+- "We're worried this may confuse our agents"
+- "How will this affect our existing workflows?"
+
+**Writing style:**
+- Address perceived risks (even if not real)
+- Note trust deficits or communication gaps
+- Identify areas needing better education or controls
+
+## Conversation Categorization
+
+Classify the conversation using these categories (can select multiple):
+
+1. **Feature Discovery**: Client discovering existing features they didn't know about
+   - Example: "Didn't know journeys could trigger on webhooks"
+
+2. **Feature/Product Feedback**: Direct feedback on feature usage, design, or roadmap
+   - Example: "It'd be great if broadcasts could auto-pause after bounce"
+
+3. **Issue/Escalation**: Technical or functional problems impacting usage
+   - Example: "AI agent stopped responding to messages"
+
+4. **Query/Clarification**: Questions about how something works
+   - Example: "What's the difference between campaign and journey?"
+
+5. **Strategic/Planning Discussion**: Broader talks around business goals, campaigns, or planning
+   - Example: "We're planning Diwali campaigns — can we automate product recommendations?"
+
+6. **Ad-hoc/Off-topic Insight**: Feedback or request unrelated to current agenda
+   - Example: "Can you also integrate with our loyalty app?"
+
+## Analysis Process
+
+### Step 1: Read and Understand the Transcript
+- Identify all participants
+- Note the call date and duration if available
+- Understand the main topics discussed
+
+### Step 2: Extract Basic Information
+- Client/Company name
+- Call date
+- PM(s) involved
+- Pod(s) relevant to the discussion
+- Ecommerce category (if mentioned or inferable)
+
+### Step 3: Apply Four-Quadrant Framework
+For each piece of feedback or discussion point:
+1. Determine which quadrant(s) it belongs to
+2. Assess emotion intensity (mild vs strong)
+3. Identify the underlying need or belief
+4. Extract the relevant quote or summary
+
+### Step 4: Categorize the Conversation
+- Determine primary conversation type(s)
+- Can select multiple categories if the call covers different topics
+
+### Step 5: Determine Relevance
+- **Critical**: Blocking adoption, causing churn risk, or high-value opportunity
+- **High**: Significant impact on user experience or business value
+- **Medium**: Moderate impact or nice-to-have
+- **Low**: Minor impact or edge case
+
+### Step 6: Extract Action Items
+- List all commitments, follow-ups, or next steps
+- Include owner (if mentioned) and timeline (if mentioned)
+- Format as bulleted list
+
+### Step 7: Write Objective
+- One-sentence summary of the call's main purpose
+- Should be clear and actionable
+
+## Content Structure
+
+### Page Content
+The page body should include:
+- Video link (if available) as a link in the content
+- Any additional context that doesn't fit in properties
+- Structured notes if needed
+
+### Property Writing Guidelines
+
+**Objective:**
+- One clear sentence summarizing the call's purpose
+- Example: "Client currently needs to manually review each conversation in Manifest chatbot to extract customer insights, creating significant operational friction and limiting their ability to scale insights generation."
+
+**Friction/Stickiness/Motivation/Anxiety:**
+- Write in narrative form, not bullet points
+- Include direct quotes when they're impactful
+- Explain the "what they said" vs "what they really mean"
+- Connect to business impact
+- Use paragraphs, not lists
+
+**Action Items:**
+- Use bullet points (•)
+- Include owner if mentioned
+- Include timeline if mentioned
+- Be specific and actionable
+
+## Output Format
+
+**Primary Output:** Create a Markdown file in Notion-flavored Markdown format saved as `call-record-[customer-name-or-date].md` in the workspace root.
+
+**Notion API Usage (Only if explicitly requested):**
+
+When creating a Notion page (only if user explicitly requests it):
+1. Use the `notion-create-pages` tool
+2. Set parent as: `{"data_source_id": "294d6d0e-f1b7-803e-bf2a-000b90e7dbca"}`
+3. For date properties, use expanded format:
+   - `"date:Date:start": "YYYY-MM-DD"`
+   - `"date:Date:is_datetime": 0` (for date only, not datetime)
+4. For multi-select properties, use the exact option names from the schema
+5. For select properties, use exactly one option name
+
+## Example Analysis Pattern
+
+**Transcript excerpt:**
+> "We need to go through each and every conversation in Manifest chatbot to understand what customers want. We need keyword search in chats. Show us hot topics and what customers keep talking about."
+
+**Analysis:**
+- **Category**: Feature Discovery, Feature/Product Feedback
+- **Friction (Current Solution)**: "They're manually going through every single chat conversation to figure out what customers want. Think about that for a second. Every. Single. Chat. Their team is literally reading through hundreds of conversations trying to spot patterns, and by the time they find something useful, the opportunity might already be gone."
+- **Relevance**: Critical (operational blocker)
+
+## Important Notes
+
+1. **Do NOT start implementing features** mentioned in the call record
+2. **Focus on extraction and analysis**, not solution design
+3. **Preserve the client's voice** through direct quotes when impactful
+4. **Connect feedback to business impact** when possible
+5. **Be thorough** - extract all relevant information from the transcript
+6. **Use the exact property names** as defined in the database schema (for reference when creating the markdown structure)
+7. **If information is missing**, leave the property empty rather than guessing
+8. **DO NOT automatically create a Notion page** - only create a Markdown file unless the user explicitly requests a Notion page
+9. **Save the file** as `call-record-[customer-name-or-date].md` in the workspace root
+
+## Quality Checklist
+
+Before creating the Notion page, ensure:
+- [ ] All four quadrants have been analyzed (even if some are empty)
+- [ ] Conversation is properly categorized
+- [ ] Relevance level is assigned
+- [ ] Action items are extracted and formatted
+- [ ] Client name and date are accurate
+- [ ] PM and Pod are correctly identified
+- [ ] Objective is clear and concise
+- [ ] All text fields use narrative style (except Action Items)
+- [ ] Direct quotes are used when impactful
+- [ ] Business impact is connected where relevant

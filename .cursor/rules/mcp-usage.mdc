@@ -1,0 +1,18 @@
+---
+description: General MCP (Model Context Protocol) usage guidelines and best practices
+alwaysApply: true
+---
+
+# MCP Usage Guidelines
+
+## General Rules
+
+- After MCP tasks, create cursor rules for reuse to reduce failures
+- Check cursor rules before tasks; use MCP when available
+- If MCP is required but inaccessible, ask to check settings
+
+## Best Practices
+
+- Always verify MCP availability before attempting operations
+- Create reusable Cursor Rules after successful MCP operations
+- Document MCP configuration issues for troubleshooting and add to the rules for future usage

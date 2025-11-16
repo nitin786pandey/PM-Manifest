@@ -1,0 +1,235 @@
+---
+description: Guide on how to create Cursor rules for any context
+alwaysApply: false
+---
+# How to Create Cursor Rules
+
+This guide explains how to create Cursor rules for any context in your project.
+
+## Overview
+
+Cursor rules are configuration files that provide context-specific guidance to the AI assistant. They help maintain consistency, enforce standards, and provide domain-specific knowledge across your project.
+
+## File Structure
+
+### Location
+- Cursor rules are stored in the `.cursor/rules` directory at the root of your project
+- Each rule is a separate file with the `.mdc` extension (Markdown with metadata)
+
+### File Format
+Cursor rules use MDC (Markdown with metadata) format, which consists of:
+1. **Metadata block** (enclosed by `---` at the top)
+2. **Content block** (Markdown content below the metadata)
+
+## Metadata Block
+
+The metadata block defines when and how the rule applies:
+
+```mdc
+---
+description: Brief description of what this rule does
+globs: ["**/*.js", "**/*.ts"]  # Optional: file patterns
+alwaysApply: true              # Optional: always include in context
+---
+```
+
+### Metadata Fields
+
+- **`description`** (required): A clear, concise explanation of the rule's purpose
+- **`globs`** (optional): Array of file patterns (glob patterns) that determine which files this rule applies to
+  - Examples: `["**/*.js"]`, `["**/*.tsx", "**/*.ts"]`, `["src/**/*"]`
+  - If omitted, the rule applies to all files
+- **`alwaysApply`** (optional): Boolean (`true`/`false`) that determines if the rule should always be included in the AI context
+  - `true`: Rule is always active regardless of file context
+  - `false` or omitted: Rule only applies when matching files are open or being edited
+
+## Content Block
+
+The content block contains the actual guidance, written in Markdown:
+
+```mdc
+---
+description: Example rule
+globs: ["**/*.js"]
+alwaysApply: false
+---
+
+# JavaScript Coding Standards
+
+- Always use const/let, never var
+- Use arrow functions for callbacks
+- Follow ESLint configuration
+- Write JSDoc comments for all functions
+```
+
+## Best Practices for Creating Rules
+
+### 1. Be Specific and Clear
+- Write clear, actionable instructions
+- Use examples when helpful
+- Avoid ambiguous language
+
+### 2. Organize by Context
+- Create separate rules for different contexts (e.g., frontend, backend, tests)
+- Use `globs` to target specific file types or directories
+- Group related guidelines together
+
+### 3. Use Appropriate Scope
+- **Project-wide rules**: Set `alwaysApply: true` and omit or use broad `globs`
+- **File-type specific rules**: Use specific `globs` patterns (e.g., `["**/*.test.js"]`)
+- **Directory-specific rules**: Use directory patterns (e.g., `["src/components/**/*"]`)
+
+### 4. Structure Your Content
+- Use Markdown headings to organize sections
+- Use lists for multiple guidelines
+- Include code examples when demonstrating patterns
+- Reference external documentation when appropriate
+
+## Examples
+
+### Example 1: Project-Wide Rule
+```mdc
+---
+description: General coding standards for the entire project
+alwaysApply: true
+---
+
+# Project Coding Standards
+
+- Follow the project's style guide
+- Write self-documenting code
+- Add comments for complex logic
+- Run linters before committing
+```
+
+### Example 2: Language-Specific Rule
+```mdc
+---
+description: TypeScript-specific coding guidelines
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Guidelines
+
+- Always define explicit return types for functions
+- Use interfaces over type aliases for object shapes
+- Enable strict mode in tsconfig.json
+- Prefer type inference for simple cases
+```
+
+### Example 3: Component-Specific Rule
+```mdc
+---
+description: React component patterns and conventions
+globs: ["src/components/**/*.tsx", "src/pages/**/*.tsx"]
+alwaysApply: false
+---
+
+# React Component Guidelines
+
+- Use functional components with hooks
+- Extract reusable logic into custom hooks
+- Keep components small and focused
+- Use TypeScript for all props
+- Follow the component naming convention: PascalCase
+```
+
+### Example 4: Test-Specific Rule
+```mdc
+---
+description: Testing standards and best practices
+globs: ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**/*"]
+alwaysApply: false
+---
+
+# Testing Guidelines
+
+- Write descriptive test names
+- Follow AAA pattern (Arrange, Act, Assert)
+- Mock external dependencies
+- Aim for high code coverage
+- Use test-driven development (TDD) when appropriate
+```
+
+## Creating a New Rule
+
+### Step-by-Step Process
+
+1. **Identify the Context**
+   - Determine what files, directories, or scenarios the rule should apply to
+   - Consider if it should always apply or be context-specific
+
+2. **Create the File**
+   - Navigate to `.cursor/rules` directory
+   - Create a new file with `.mdc` extension
+   - Use a descriptive filename (e.g., `react-components.mdc`, `api-guidelines.mdc`)
+
+3. **Write the Metadata**
+   - Add the metadata block with `---` delimiters
+   - Include a clear `description`
+   - Set `globs` if the rule is file-specific
+   - Set `alwaysApply` if it should always be active
+
+4. **Write the Content**
+   - Use Markdown formatting
+   - Organize with headings and lists
+   - Include examples and best practices
+   - Be specific and actionable
+
+5. **Test the Rule**
+   - Open files that should trigger the rule
+   - Verify the AI assistant follows the guidelines
+   - Adjust `globs` or content as needed
+
+## Tips
+
+- **Start broad, then narrow**: Begin with general rules, then add specific ones
+- **Keep rules focused**: One rule per concern or context
+- **Update regularly**: Refine rules as your project evolves
+- **Document exceptions**: If a rule has exceptions, document them clearly
+- **Use examples**: Include code examples showing correct patterns
+- **Reference standards**: Link to style guides, documentation, or external resources
+
+## Common Patterns
+
+### Pattern: Multiple File Types
+```mdc
+globs: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+```
+
+### Pattern: Specific Directory
+```mdc
+globs: ["src/api/**/*", "src/services/**/*"]
+```
+
+### Pattern: Exclude Patterns
+Note: Cursor rules don't support exclusion directly in globs, but you can create separate rules for different contexts.
+
+### Pattern: Always Active Rule
+```mdc
+---
+description: Project-wide standards
+alwaysApply: true
+---
+```
+
+## Troubleshooting
+
+- **Rule not applying?** Check that:
+  - File is in `.cursor/rules` directory
+  - File has `.mdc` extension
+  - `globs` patterns match your files (if specified)
+  - `alwaysApply` is set correctly
+
+- **Rule too broad?** Narrow the `globs` patterns or split into multiple specific rules
+
+- **Rule too narrow?** Expand `globs` patterns or set `alwaysApply: true`
+
+## Summary
+
+Cursor rules are powerful tools for maintaining consistency and providing context-specific guidance. By following this guide, you can create effective rules for any context in your project. Remember to:
+- Use clear, descriptive metadata
+- Write actionable, specific content
+- Organize rules by context and scope
+- Test and refine rules as needed

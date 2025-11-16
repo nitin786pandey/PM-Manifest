@@ -1,0 +1,42 @@
+---
+description: Python coding standards and best practices
+globs: ["**/*.py"]
+alwaysApply: false
+---
+
+# Python Coding Standards
+
+## Style Guide
+
+- Follow **PEP 8** style guide
+- Use **type hints** for function parameters and return types
+- Write **docstrings** for all functions, classes, and modules
+
+## Code Quality
+
+- Use meaningful variable and function names
+- Keep functions focused and single-purpose
+- Handle exceptions appropriately
+- Validate input data
+- Comment complex logic
+
+## Example
+
+```python
+def fetch_jira_issue(issue_key: str) -> dict:
+    """
+    Fetch a Jira issue by its key.
+    
+    Args:
+        issue_key: The Jira issue key (e.g., 'PROJ-123')
+        
+    Returns:
+        Dictionary containing issue data
+        
+    Raises:
+        ValueError: If issue_key is invalid
+    """
+    if not issue_key:
+        raise ValueError("Issue key cannot be empty")
+    # ... implementation
+```

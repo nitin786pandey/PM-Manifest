@@ -1,0 +1,36 @@
+---
+description: Guidelines for handling Jira data structure and fields
+alwaysApply: false
+---
+# Jira Data Handling
+
+## Context
+
+Jira data from Manifest Portal (MP), Bik.ai Atlassian
+
+## Data Structure
+
+- Preserve Jira JSON structure when processing
+- Handle nested fields appropriately
+- Use standard Jira field names: `issueKey`, `createdDate`, `summary`
+
+## Data Validation
+
+- Handle nulls and missing fields gracefully
+- Validate data structure before processing
+- Provide clear error messages for invalid data
+- Comment complex logic for data transformation
+
+## Common Fields
+
+- `issueKey`: Unique identifier (e.g., "PROJ-123")
+- `createdDate`: ISO 8601 date string
+- `summary`: Issue title/summary
+- `fields`: Nested object containing additional issue data
+
+## Best Practices
+
+- Always check for null/undefined before accessing nested properties
+- Use optional chaining when appropriate
+- Validate required fields before processing
+- Log data structure issues for debugging

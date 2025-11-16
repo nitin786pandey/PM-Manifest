@@ -1,0 +1,43 @@
+---
+description: JavaScript and TypeScript coding standards
+globs: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# JavaScript/TypeScript Coding Standards
+
+## Language Features
+
+- Use **ES6+** features
+- Prefer **async/await** over promises
+- Use **const/let**, never `var`
+- Write **JSDoc** comments for functions
+
+## TypeScript Specific
+
+- Use explicit types when beneficial
+- Leverage type inference where appropriate
+- Define interfaces for complex objects
+
+## Code Quality
+
+- Use meaningful variable and function names
+- Keep functions focused and single-purpose
+- Handle errors appropriately
+- Validate input data
+
+## Example
+
+```typescript
+/**
+ * Fetches a Jira issue by its key
+ * @param issueKey - The Jira issue key (e.g., 'PROJ-123')
+ * @returns Promise resolving to issue data
+ */
+async function fetchJiraIssue(issueKey: string): Promise<Issue> {
+  if (!issueKey) {
+    throw new Error('Issue key cannot be empty');
+  }
+  // ... implementation
+}
+```
