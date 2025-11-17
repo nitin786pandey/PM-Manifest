@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from es_fetch import (
@@ -20,6 +21,7 @@ from manifest_analysis import (
 	make_two_periods,
 	compute_shift_share_drivers,
 )
+from store_lookup import get_store_id_from_name, get_all_stores
 
 
 def ask_or_default(prompt: str, default: str) -> str:
@@ -30,6 +32,102 @@ def ask_or_default(prompt: str, default: str) -> str:
 		resp = input(f"{prompt} [{default}]: ").strip()
 		return resp or default
 	return default
+
+
+def extract_store_name_from_text(text: str) -> Optional[str]:
+	"""
+	Extract store name from natural language text.
+	Looks for patterns like:
+	- "for [Store Name]"
+	- "in [Store Name]"
+	- "[Store Name] store"
+	- Direct mentions of known store names
+	
+	Args:
+		text: The input text to search
+	
+	Returns:
+		Extracted store name if found, None otherwise
+	"""
+	if not text:
+		return None
+	
+	# Get all known store names for pattern matching
+	all_stores = get_all_stores()
+	store_names = [store.get("storeName", "") for store in all_stores]
+	store_names.extend([alias for store in all_stores for alias in store.get("aliases", [])])
+	
+	# Pattern 1: "for [Store Name]" or "for the [Store Name]"
+	pattern1 = re.compile(r'\bfor\s+(?:the\s+)?([A-Z][A-Za-z\s]+?)(?:\s+store|\s*$|,|\?|\.)', re.IGNORECASE)
+	match1 = pattern1.search(text)
+	if match1:
+		candidate = match1.group(1).strip()
+		# Check if it matches a known store
+		for store_name in store_names:
+			if candidate.lower() in store_name.lower() or store_name.lower() in candidate.lower():
+				return candidate
+	
+	# Pattern 2: "in [Store Name]" or "in the [Store Name]"
+	pattern2 = re.compile(r'\bin\s+(?:the\s+)?([A-Z][A-Za-z\s]+?)(?:\s+store|\s*$|,|\?|\.)', re.IGNORECASE)
+	match2 = pattern2.search(text)
+	if match2:
+		candidate = match2.group(1).strip()
+		for store_name in store_names:
+			if candidate.lower() in store_name.lower() or store_name.lower() in candidate.lower():
+				return candidate
+	
+	# Pattern 3: Direct mention of known store names
+	text_lower = text.lower()
+	for store_name in store_names:
+		if store_name.lower() in text_lower:
+			# Find the actual mention in original case
+			pattern = re.compile(re.escape(store_name), re.IGNORECASE)
+			match = pattern.search(text)
+			if match:
+				return match.group(0)
+	
+	return None
+
+
+def resolve_store_id(
+	store_id: Optional[str],
+	store_name: Optional[str],
+	input_text: Optional[str] = None,
+) -> Optional[str]:
+	"""
+	Resolve storeId from various sources with priority:
+	1. Explicit store_id (highest priority)
+	2. Explicit store_name (lookup)
+	3. Store name extracted from input_text (lowest priority)
+	
+	Args:
+		store_id: Explicitly provided storeId
+		store_name: Explicitly provided store name
+		input_text: Natural language input text to extract store name from
+	
+	Returns:
+		Resolved storeId, or None if not found
+	"""
+	# Priority 1: Explicit store_id
+	if store_id:
+		return store_id
+	
+	# Priority 2: Explicit store_name
+	if store_name:
+		resolved = get_store_id_from_name(store_name, fuzzy=True)
+		if resolved:
+			return resolved
+		print(f"Warning: Store name '{store_name}' not found in configuration.", file=os.sys.stderr)
+	
+	# Priority 3: Extract from input text
+	if input_text:
+		extracted_name = extract_store_name_from_text(input_text)
+		if extracted_name:
+			resolved = get_store_id_from_name(extracted_name, fuzzy=True)
+			if resolved:
+				return resolved
+	
+	return None
 
 
 def build_session_counts_dsl(gte: str, lte: str, session_field: str = "visitorSessionId", store_id: Optional[str] = None) -> Dict[str, Any]:
@@ -376,6 +474,7 @@ def main() -> None:
 	parser.add_argument("--indices", type=str, default=None, help="Override indices")
 	parser.add_argument("--session-field", type=str, default="visitorSessionId", help="Session id field")
 	parser.add_argument("--store-id", type=str, default=None, help="Filter by storeId (exact match)")
+	parser.add_argument("--store-name", type=str, default=None, help="Filter by store name (will be resolved to storeId)")
 	parser.add_argument("--cohort", type=str, default="storeId", help="Cohort dimension field (default: storeId)")
 	parser.add_argument("--top-x", type=int, default=10, help="Top contributors to include")
 	parser.add_argument("--compare-window", type=int, default=28, help="Compare window in days (current vs previous)")
@@ -385,14 +484,24 @@ def main() -> None:
 	if args.indices:
 		cfg.indices = args.indices
 
+	# Resolve store_id from various sources
+	resolved_store_id = resolve_store_id(
+		store_id=args.store_id,
+		store_name=args.store_name,
+		input_text=args.question,
+	)
+	
+	if resolved_store_id:
+		print(f"Resolved store context: storeId={resolved_store_id}", file=os.sys.stderr)
+
 	question = args.question.lower().strip()
 
 	# Clarify ambiguous definitions
 	if "interaction rate" in question:
 		# Use clicks/visits definition per latest guidance
-		result_clicks_visits = run_interaction_rate_clicks_over_visits(cfg, gte=args.gte, lte=args.lte, store_id=args.store_id)
+		result_clicks_visits = run_interaction_rate_clicks_over_visits(cfg, gte=args.gte, lte=args.lte, store_id=resolved_store_id)
 		# Include legacy hasInteracted context for reference
-		result_sessions = run_interaction_rate_analysis(cfg, gte=args.gte, lte=args.lte, store_id=args.store_id)
+		result_sessions = run_interaction_rate_analysis(cfg, gte=args.gte, lte=args.lte, store_id=resolved_store_id)
 		result = {
 			"clicks_over_visits": result_clicks_visits,
 			"sessions_based": result_sessions,
@@ -403,7 +512,7 @@ def main() -> None:
 		cohort_field = args.cohort or "storeId"
 		rca = run_rca_interaction_rate(
 			cfg=cfg,
-			store_id=args.store_id,
+			store_id=resolved_store_id,
 			indices=cfg.indices,
 			compare_days=args.compare_window,
 			cohort_field=cohort_field,

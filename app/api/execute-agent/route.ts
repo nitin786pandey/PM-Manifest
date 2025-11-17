@@ -31,7 +31,12 @@ export async function POST(req: NextRequest) {
 	}
 
 	try {
-		const upstream = await executeAgent(parsed.data);
+		const upstream = await executeAgent({
+			agentId: parsed.data.agentId,
+			input: parsed.data.input,
+			params: parsed.data.params,
+			context: parsed.data.context,
+		});
 		const contentType = upstream.headers.get('content-type') ?? 'application/json';
 		const text = await upstream.text();
 		const status = upstream.ok ? 200 : 502;

@@ -1,0 +1,15 @@
+{
+  "stores": [
+    {
+      "storeId": "store_123",
+      "storeName": "Acme Store",
+      "aliases": ["acme", "acme store"]
+    },
+    {
+      "storeId": "store_456",
+      "storeName": "Example Shop",
+      "aliases": ["example", "example shop"]
+    }
+  ],
+  "_comment": "Store name to storeId mapping. Add stores with storeId, storeName, and optional aliases array for fuzzy matching."
+}
