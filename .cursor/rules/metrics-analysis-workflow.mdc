@@ -1,0 +1,208 @@
+---
+description: Guidelines for metrics analysis workflow - reuse existing scripts, optimize context after queries, and document eventProperties for future use
+alwaysApply: true
+---
+
+# Metrics Analysis Workflow
+
+This rule defines how to handle metrics analysis requests, emphasizing code reuse, context optimization, and documentation of discovered patterns.
+
+## Core Principle: Reuse Before Creating
+
+**Always check existing scripts before writing new code for metrics analysis.**
+
+### Available Scripts
+
+The following scripts in `/workspace/scripts/` provide reusable functionality:
+
+1. **`es_fetch.py`** - Elasticsearch client utilities
+   - `ElasticsearchConfig` - Configuration management
+   - `search()` - Execute search queries
+   - `search_all()` - Paginated search
+   - `get_mapping()` - Discover index mappings
+   - `build_date_range_query()` - Date range filters
+   - `base_bool_query()` - Boolean query builder
+
+2. **`es_to_df.py`** - Data conversion utilities
+   - `hits_to_dataframe()` - Convert ES hits to pandas DataFrame
+   - Flattens `eventProperties.*` automatically
+
+3. **`manifest_analysis.py`** - Metric computation functions
+   - `compute_interaction_rate()` - Interaction rate calculation
+   - `compute_interaction_rate_from_counts()` - Rate from click/visit counts
+   - `compute_unique_sessions()` - Unique session counting
+   - `compute_total_sales()` - Sales aggregation
+   - `compute_aov()` - Average order value
+   - `compute_conversion_rate()` - Conversion rate calculation
+   - `filter_event()` - Event filtering
+   - `breakdown_by_field()` - Cohort breakdowns
+   - `make_two_periods()` - Period comparison helpers
+   - `compute_shift_share_drivers()` - Shift-share analysis
+
+4. **`agent_runner.py`** - Orchestration and query builders
+   - `build_session_counts_dsl()` - Session count aggregations
+   - `build_checkout_agg_dsl()` - Checkout aggregations
+   - `build_event_count_dsl()` - Event count queries
+   - `build_event_sum_count_dsl()` - Counter event aggregations
+   - `detect_counter_event()` - Counter event detection
+   - `get_event_total()` - Get total for an event (counter-aware)
+   - `build_daily_timeseries_dsl()` - Daily time series queries
+   - `counter_aware_daily_series()` - Counter-aware time series
+   - `counter_aware_cohort_totals()` - Cohort breakdowns
+   - `run_interaction_rate_analysis()` - Interaction rate analysis
+   - `run_interaction_rate_clicks_over_visits()` - Clicks/visits rate
+   - `run_rca_interaction_rate()` - Root cause analysis for interaction rate
+
+### When to Write New Code
+
+**Only create new scripts or functions if:**
+1. The required functionality doesn't exist in current scripts
+2. The existing functions cannot be easily extended or composed
+3. The new functionality is significantly different and warrants a separate module
+
+**Before writing new code:**
+1. Review all existing scripts to understand available functions
+2. Check if existing functions can be composed to solve the problem
+3. Consider extending existing functions with optional parameters
+4. Document why new code is necessary if you proceed
+
+## Context Optimization After Analytics Queries
+
+**After executing every analytics-related query, optimize context and documentation for future reuse.**
+
+### Step 1: Document Discovered EventProperties
+
+When you discover `eventProperties` for an event during analysis, document them immediately:
+
+1. **Update the relevant README** (`README.md` or `README-execute-agent.md`)
+   - Add a section documenting the event and its properties
+   - Include example values and data types
+   - Note whether it's a counter event (has `eventProperties.count`)
+
+2. **Format for documentation:**
+   ```markdown
+   ### Event: `eventName`
+   - **Type**: Counter / Non-counter
+   - **Properties**:
+     - `eventProperties.property1` (type: string/number/boolean) - Description
+     - `eventProperties.property2` (type: number) - Description
+   - **Common Filters**: `storeId`, `visitorSessionId`
+   - **Usage Example**: [Brief description of when/how this event is used]
+   ```
+
+3. **Update the analytics rule** (`.cursor/rules/agentic-elastic-analytics.mdc`)
+   - Add the event to the events list if it's commonly used
+   - Add discovered properties to the common properties list
+   - Document any special handling (counter detection, aggregation patterns)
+
+### Step 2: Document Query Patterns
+
+After building and executing queries, document reusable patterns:
+
+1. **Query DSL patterns** - If you create a new query pattern:
+   - Document it in the README with a clear example
+   - Include the use case and when to apply it
+   - Note any performance considerations
+
+2. **Metric computation patterns** - If you compute a new metric:
+   - Document the formula and logic
+   - Add it to `manifest_analysis.py` if it's reusable
+   - Update README with usage examples
+
+### Step 3: Update Script Documentation
+
+After using or extending scripts:
+
+1. **Function documentation** - If you extend a function:
+   - Update docstrings with new parameters
+   - Add examples of new use cases
+   - Document any breaking changes
+
+2. **Script-level documentation** - If you add new scripts:
+   - Add them to the README's "Python Modules" section
+   - Document dependencies and usage
+   - Include example command-line invocations
+
+### Step 4: Create Reusable Query Builders
+
+If you find yourself building similar queries repeatedly:
+
+1. **Add to `agent_runner.py`** - Create a new builder function:
+   ```python
+   def build_<metric>_dsl(gte: str, lte: str, store_id: Optional[str] = None) -> Dict[str, Any]:
+       """Build DSL for <metric description>."""
+       # Implementation
+   ```
+
+2. **Follow existing patterns** - Match the style of existing builders:
+   - Use `build_date_range_query()` for time filters
+   - Use `base_bool_query()` for boolean queries
+   - Support optional `store_id` filtering
+   - Return DSL dictionaries ready for `search()`
+
+3. **Document the builder** - Add to README with:
+   - Purpose and use case
+   - Parameters and return value
+   - Example usage
+
+## Workflow Checklist
+
+After completing any analytics query or analysis:
+
+- [ ] Checked existing scripts for reusable functions
+- [ ] Documented discovered `eventProperties` in README
+- [ ] Updated analytics rule with new events/properties if commonly used
+- [ ] Documented new query patterns if created
+- [ ] Added reusable query builders to `agent_runner.py` if pattern is repeated
+- [ ] Updated function docstrings if extended
+- [ ] Added examples to README for new functionality
+- [ ] Verified documentation is clear and complete
+
+## Examples
+
+### Example 1: Discovering New Event Properties
+
+**Scenario**: Analyzing a new event `productRecommendationShown`
+
+**After query execution:**
+1. Document in README:
+   ```markdown
+   ### Event: `productRecommendationShown`
+   - **Type**: Counter
+   - **Properties**:
+     - `eventProperties.count` (type: number) - Number of recommendations shown
+     - `eventProperties.recommendationType` (type: string) - Type of recommendation
+     - `eventProperties.productIds` (type: array) - Array of recommended product IDs
+   ```
+
+2. Update analytics rule with the event name
+
+3. If this becomes a common query, add a builder function to `agent_runner.py`
+
+### Example 2: Creating Reusable Query Pattern
+
+**Scenario**: Need to compute conversion rate by `pageType` repeatedly
+
+**Action:**
+1. Create `build_conversion_by_pagetype_dsl()` in `agent_runner.py`
+2. Document in README:
+   ```markdown
+   ### Conversion Rate by Page Type
+   Use `build_conversion_by_pagetype_dsl()` to analyze conversion rates across different page types.
+   Returns aggregations grouped by `pageType` with checkout counts.
+   ```
+3. Add example usage to README
+
+## Best Practices
+
+1. **Incremental Documentation** - Don't wait until the end; document as you discover
+2. **Consistency** - Follow existing documentation patterns and styles
+3. **Completeness** - Include enough detail for future reuse without re-discovery
+4. **Examples** - Always include practical examples in documentation
+5. **Validation** - Verify documented patterns work correctly before committing
+
+## Integration with Other Rules
+
+- Follow `.cursor/rules/agentic-elastic-analytics.mdc` for query building patterns
+- Follow `.cursor/rules/python-standards.mdc` for code style
+- Follow `.cursor/rules/markdown-standards.mdc` for README formatting
