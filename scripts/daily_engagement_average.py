@@ -78,6 +78,151 @@ def calculate_daily_average(daily_sums: List[Dict[str, Any]]) -> float:
 	return total / len(daily_sums)
 
 
+def calculate_trend_analysis(daily_sums: List[Dict[str, Any]]) -> Dict[str, Any]:
+	"""
+	Analyze day-by-day trends and detect substantial changes.
+	Returns trend metrics, day-over-day changes, and anomaly detection.
+	"""
+	if len(daily_sums) < 2:
+		return {"error": "Need at least 2 days of data for trend analysis"}
+	
+	# Sort by date to ensure chronological order
+	sorted_days = sorted(daily_sums, key=lambda x: x["date"])
+	values = [day["sum_count"] for day in sorted_days]
+	
+	# Calculate day-over-day changes
+	day_over_day_changes = []
+	for i in range(1, len(sorted_days)):
+		prev_value = sorted_days[i - 1]["sum_count"]
+		curr_value = sorted_days[i]["sum_count"]
+		if prev_value == 0:
+			pct_change = 0.0
+		else:
+			pct_change = ((curr_value - prev_value) / prev_value) * 100.0
+		
+		day_over_day_changes.append({
+			"date": sorted_days[i]["date"],
+			"previous_date": sorted_days[i - 1]["date"],
+			"current_value": curr_value,
+			"previous_value": prev_value,
+			"absolute_change": curr_value - prev_value,
+			"percentage_change": pct_change,
+		})
+	
+	# Calculate moving averages (7-day and 14-day)
+	moving_avg_7 = []
+	moving_avg_14 = []
+	for i in range(len(values)):
+		start_7 = max(0, i - 6)
+		start_14 = max(0, i - 13)
+		avg_7 = sum(values[start_7:i + 1]) / (i - start_7 + 1) if i >= 0 else values[i]
+		avg_14 = sum(values[start_14:i + 1]) / (i - start_14 + 1) if i >= 0 else values[i]
+		moving_avg_7.append(avg_7)
+		moving_avg_14.append(avg_14)
+	
+	# Calculate statistics
+	mean = sum(values) / len(values)
+	variance = sum((x - mean) ** 2 for x in values) / len(values)
+	std_dev = variance ** 0.5
+	
+	# Detect outliers using z-scores (values > 2 standard deviations from mean)
+	outliers = []
+	for i, day in enumerate(sorted_days):
+		z_score = (day["sum_count"] - mean) / std_dev if std_dev > 0 else 0
+		if abs(z_score) > 2.0:
+			outliers.append({
+				"date": day["date"],
+				"value": day["sum_count"],
+				"z_score": z_score,
+				"deviation_from_mean": day["sum_count"] - mean,
+				"deviation_pct": ((day["sum_count"] - mean) / mean * 100.0) if mean > 0 else 0.0,
+			})
+	
+	# Find largest increases
+	largest_increases = sorted(
+		day_over_day_changes,
+		key=lambda x: x["percentage_change"],
+		reverse=True
+	)[:5]
+	
+	# Find largest decreases
+	largest_decreases = sorted(
+		day_over_day_changes,
+		key=lambda x: x["percentage_change"]
+	)[:5]
+	
+	# Detect trend breaks (when 7-day moving average shifts significantly)
+	trend_breaks = []
+	for i in range(7, len(sorted_days)):
+		# Compare current 7-day avg with previous 7-day avg
+		prev_avg = sum(values[i - 7:i]) / 7
+		curr_avg = sum(values[i - 6:i + 1]) / 7
+		if prev_avg > 0:
+			shift_pct = ((curr_avg - prev_avg) / prev_avg) * 100.0
+			# Flag if shift is > 15%
+			if abs(shift_pct) > 15.0:
+				trend_breaks.append({
+					"date": sorted_days[i]["date"],
+					"previous_7day_avg": prev_avg,
+					"current_7day_avg": curr_avg,
+					"shift_percentage": shift_pct,
+					"shift_type": "increase" if shift_pct > 0 else "decrease",
+				})
+	
+	# Calculate overall trend (linear regression slope)
+	n = len(values)
+	if n > 1:
+		x = list(range(n))
+		sum_x = sum(x)
+		sum_y = sum(values)
+		sum_xy = sum(x[i] * values[i] for i in range(n))
+		sum_x2 = sum(xi * xi for xi in x)
+		
+		slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x) if (n * sum_x2 - sum_x * sum_x) != 0 else 0
+		
+		# Calculate trend direction and strength
+		trend_direction = "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
+		trend_strength = abs(slope) / mean * 100 if mean > 0 else 0  # Percentage change per day
+	else:
+		slope = 0
+		trend_direction = "insufficient_data"
+		trend_strength = 0
+	
+	# Add moving averages to daily data
+	enhanced_daily_data = []
+	for i, day in enumerate(sorted_days):
+		enhanced_daily_data.append({
+			"date": day["date"],
+			"sum_count": day["sum_count"],
+			"moving_avg_7day": moving_avg_7[i],
+			"moving_avg_14day": moving_avg_14[i],
+		})
+	
+	return {
+		"statistics": {
+			"mean": mean,
+			"median": sorted(values)[len(values) // 2] if values else 0,
+			"std_deviation": std_dev,
+			"min": min(values),
+			"max": max(values),
+			"range": max(values) - min(values),
+		},
+		"trend": {
+			"direction": trend_direction,
+			"slope": slope,
+			"strength_per_day_pct": trend_strength,
+			"estimated_change_over_period": slope * (n - 1),
+			"estimated_change_over_period_pct": (slope * (n - 1) / mean * 100) if mean > 0 else 0,
+		},
+		"day_over_day_changes": day_over_day_changes,
+		"enhanced_daily_data": enhanced_daily_data,
+		"outliers": outliers,
+		"largest_increases": largest_increases,
+		"largest_decreases": largest_decreases,
+		"trend_breaks": trend_breaks,
+	}
+
+
 def run_daily_engagement_analysis(
 	cfg: ElasticsearchConfig,
 	event_name: str,
@@ -105,11 +250,15 @@ def run_daily_engagement_analysis(
 	# Calculate total sum for reference
 	total_sum = sum(day["sum_count"] for day in daily_sums)
 	
+	# Perform trend analysis
+	trend_analysis = calculate_trend_analysis(daily_sums)
+	
 	return {
 		"daily_average": daily_avg,
 		"total_sum": total_sum,
 		"number_of_days": len(daily_sums),
 		"daily_breakdown": daily_sums,
+		"trend_analysis": trend_analysis,
 		"query_params": {
 			"event_name": event_name,
 			"event_identifiers": event_identifiers,
@@ -152,6 +301,49 @@ def main() -> None:
 		indices=cfg.indices,
 	)
 
+	# Print summary of key findings
+	if "trend_analysis" in result:
+		trend = result["trend_analysis"]
+		print("\n" + "="*80)
+		print("TREND ANALYSIS SUMMARY")
+		print("="*80)
+		
+		if "statistics" in trend:
+			stats = trend["statistics"]
+			print(f"\nOverall Statistics:")
+			print(f"  Mean: {stats['mean']:,.2f}")
+			print(f"  Median: {stats['median']:,.2f}")
+			print(f"  Std Deviation: {stats['std_deviation']:,.2f}")
+			print(f"  Range: {stats['min']:,.2f} to {stats['max']:,.2f}")
+		
+		if "trend" in trend:
+			trend_info = trend["trend"]
+			print(f"\nOverall Trend:")
+			print(f"  Direction: {trend_info['direction']}")
+			print(f"  Strength: {trend_info['strength_per_day_pct']:.4f}% per day")
+			print(f"  Estimated change over period: {trend_info['estimated_change_over_period_pct']:.2f}%")
+		
+		if "largest_increases" in trend and trend["largest_increases"]:
+			print(f"\nTop 5 Largest Day-over-Day Increases:")
+			for i, inc in enumerate(trend["largest_increases"], 1):
+				print(f"  {i}. {inc['date']}: {inc['percentage_change']:+.2f}% "
+				      f"({inc['previous_value']:,.0f} → {inc['current_value']:,.0f})")
+		
+		if "trend_breaks" in trend and trend["trend_breaks"]:
+			print(f"\nSignificant Trend Breaks (7-day moving average shifts >15%):")
+			for i, break_info in enumerate(trend["trend_breaks"], 1):
+				print(f"  {i}. {break_info['date']}: {break_info['shift_type']} of {break_info['shift_percentage']:+.2f}% "
+				      f"({break_info['previous_7day_avg']:,.0f} → {break_info['current_7day_avg']:,.0f})")
+		
+		if "outliers" in trend and trend["outliers"]:
+			print(f"\nOutliers (values >2 standard deviations from mean):")
+			for i, outlier in enumerate(trend["outliers"], 1):
+				print(f"  {i}. {outlier['date']}: {outlier['value']:,.0f} "
+				      f"(z-score: {outlier['z_score']:.2f}, deviation: {outlier['deviation_pct']:+.2f}%)")
+		
+		print("\n" + "="*80 + "\n")
+	
+	# Print full JSON output
 	print(json.dumps(result, indent=2))
 
 
