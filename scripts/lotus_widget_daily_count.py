@@ -49,13 +49,65 @@ def discover_widget_name_field(cfg: ElasticsearchConfig, gte: str, lte: str, ind
 	Discover the correct field name for widget name by sampling widgetVisitedSession events.
 	Returns the field path that contains "Lotus" value.
 	"""
-	# Sample a few documents to find the widget name field
+	# First, try a direct search for "Lotus" using a match query across all fields
 	filters = [
 		build_date_range_query(gte=gte, lte=lte),
 		{"term": {"eventName.keyword": "widgetVisitedSession"}},
 	]
-	dsl = {
+	
+	# Try searching for "Lotus" using a match query
+	dsl_search = {
 		"size": 100,
+		"track_total_hits": True,
+		"query": {
+			"bool": {
+				"filter": filters,
+				"must": [{"match": {"_all": "Lotus"}}]  # Search all fields
+			}
+		},
+		"sort": [{"createdAt": {"order": "desc"}}],
+	}
+	
+	try:
+		resp = search(cfg, dsl_search, indices=indices)
+		hits = resp.get("hits", {}).get("hits", [])
+		if hits:
+			print(f"Found {len(hits)} documents containing 'Lotus'", file=sys.stderr)
+			# Analyze the first hit to find where "Lotus" is
+			sample = hits[0].get("_source", {})
+			def find_lotus_path(obj, path=""):
+				if isinstance(obj, dict):
+					for k, v in obj.items():
+						current_path = f"{path}.{k}" if path else k
+						if isinstance(v, str) and "lotus" in v.lower():
+							return current_path
+						result = find_lotus_path(v, current_path)
+						if result:
+							return result
+				elif isinstance(obj, list):
+					for i, item in enumerate(obj):
+						result = find_lotus_path(item, f"{path}[{i}]")
+						if result:
+							return result
+				return None
+			
+			lotus_path = find_lotus_path(sample)
+			if lotus_path:
+				print(f"Found 'Lotus' at path: {lotus_path}", file=sys.stderr)
+				# Convert to Elasticsearch field format
+				if not lotus_path.startswith("eventProperties.") and "." in lotus_path:
+					# It's a nested path, use as-is
+					return lotus_path
+				elif lotus_path.startswith("eventProperties."):
+					return lotus_path
+				else:
+					return lotus_path
+	except Exception as e:
+		print(f"Match query failed, trying sample approach: {e}", file=sys.stderr)
+	
+	# Fallback: Sample documents to find the widget name field
+	dsl = {
+		"size": 500,  # Increased sample size
 		"track_total_hits": True,
 		"query": base_bool_query(filters),
 		"sort": [{"createdAt": {"order": "desc"}}],
@@ -252,29 +304,64 @@ def lotus_widget_daily_count(
 	strategies = [
 		# Strategy 1: Use discovered/provided field
 		lambda: build_lotus_widget_daily_dsl(gte, lte, is_counter, widget_name_field, widget_value),
-		# Strategy 2: Try storeId (maybe widget_value is a store identifier)
+		# Strategy 2: Try eventIdentifier (maybe "Lotus" is an eventIdentifier)
+		lambda: build_lotus_widget_daily_dsl_with_event_identifier(gte, lte, is_counter, widget_value),
+		# Strategy 3: Try storeId (maybe widget_value is a store identifier)
 		lambda: build_lotus_widget_daily_dsl_with_store(cfg, gte, lte, is_counter, widget_value, indices),
 	]
 	
-	# Only try strategy 3 (no filter) if widget_field was not explicitly provided
-	if not widget_field:
-		strategies.append(lambda: build_all_widget_daily_dsl(gte, lte, is_counter))
-	
+	# Try strategies in order
 	for i, build_dsl in enumerate(strategies):
 		try:
 			dsl = build_dsl()
 			resp = search(cfg, dsl, indices=indices)
 			series = extract_daily_series(resp, use_sum_count=is_counter)
 			if series and any(row["count"] > 0 for row in series):
-				if i == 2:  # Strategy 3 - no filter
-					print("Warning: No Lotus filter found, returning all widgetVisitedSession events", file=sys.stderr)
+				if i == 1:  # Strategy 2 - eventIdentifier filter
+					print(f"Note: Found data using eventIdentifier filter for '{widget_value}'", file=sys.stderr)
+				elif i == 2:  # Strategy 3 - storeId filter
+					print(f"Note: Found data using storeId filter for '{widget_value}'", file=sys.stderr)
 				return series
 		except Exception as e:
 			if i < len(strategies) - 1:
+				print(f"Strategy {i+1} failed: {e}, trying next...", file=sys.stderr)
 				continue
 			raise
 	
+	# If no data found with filters, return empty
+	print(f"Warning: No data found for '{widget_value}' with any filter strategy.", file=sys.stderr)
+	print("Available options:", file=sys.stderr)
+	print("  1. Specify the field: --widget-field 'eventProperties.someField'", file=sys.stderr)
+	print("  2. If 'Lotus' is a storeId, it will be tried automatically", file=sys.stderr)
 	return []
+
+
+def build_lotus_widget_daily_dsl_with_event_identifier(
+	gte: str,
+	lte: str,
+	use_sum_count: bool,
+	event_identifier: str,
+) -> Dict[str, Any]:
+	"""Try filtering by eventIdentifier in case 'Lotus' is an eventIdentifier value."""
+	filters = [
+		build_date_range_query(gte=gte, lte=lte),
+		{"term": {"eventName.keyword": "widgetVisitedSession"}},
+		{"term": {"eventProperties.eventIdentifier.keyword": event_identifier}},
+	]
+	query = base_bool_query(filters)
+	aggs: Dict[str, Any] = {
+		"by_day": {
+			"date_histogram": {"field": "createdAt", "calendar_interval": "day"}
+		}
+	}
+	if use_sum_count:
+		aggs["by_day"]["aggs"] = {"total": {"sum": {"field": "eventProperties.count"}}}
+	return {
+		"track_total_hits": True,
+		"size": 0,
+		"query": query,
+		"aggs": aggs,
+	}
 
 
 def build_lotus_widget_daily_dsl_with_store(
@@ -364,8 +451,9 @@ def main():
 	parser.add_argument("--lte", type=str, default="now", help="End time (Elasticsearch format)")
 	parser.add_argument("--indices", type=str, default=None, help="Override indices")
 	parser.add_argument("--json", action="store_true", help="Output as JSON instead of table")
-	parser.add_argument("--widget-field", type=str, default=None, help="Override widget name field (e.g., 'eventProperties.widgetName' or 'storeId')")
+	parser.add_argument("--widget-field", type=str, default=None, help="Override widget name field (e.g., 'eventProperties.eventIdentifier' or 'storeId')")
 	parser.add_argument("--widget-value", type=str, default="Lotus", help="Widget name/value to filter by (default: 'Lotus')")
+	parser.add_argument("--list-identifiers", action="store_true", help="List all available eventIdentifiers and exit")
 	args = parser.parse_args()
 
 	try:
@@ -375,6 +463,31 @@ def main():
 	except RuntimeError as e:
 		print(f"Error: {e}", file=sys.stderr)
 		sys.exit(1)
+
+	# List available eventIdentifiers if requested
+	if args.list_identifiers:
+		filters = [
+			build_date_range_query(gte=args.gte, lte=args.lte),
+			{"term": {"eventName.keyword": "widgetVisitedSession"}},
+		]
+		dsl = {
+			"size": 0,
+			"query": base_bool_query(filters),
+			"aggs": {
+				"identifiers": {
+					"terms": {"field": "eventProperties.eventIdentifier.keyword", "size": 100}
+				}
+			}
+		}
+		try:
+			resp = search(cfg, dsl, indices=cfg.indices)
+			buckets = resp.get("aggregations", {}).get("identifiers", {}).get("buckets", [])
+			print("Available eventIdentifiers:")
+			for b in buckets:
+				print(f"  {b.get('key')} (doc_count: {b.get('doc_count')})")
+		except Exception as e:
+			print(f"Error listing identifiers: {e}", file=sys.stderr)
+		return
 
 	try:
 		print(f"Querying widgetVisitedSession events for '{args.widget_value}' widget from {args.gte} to {args.lte}...", file=sys.stderr)
