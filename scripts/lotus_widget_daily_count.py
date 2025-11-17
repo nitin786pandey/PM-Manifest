@@ -44,6 +44,36 @@ def list_available_widgets(cfg: ElasticsearchConfig, gte: str, lte: str, indices
 		print(f"Could not list stores: {e}", file=sys.stderr)
 
 
+def find_store_id_by_name(cfg: ElasticsearchConfig, store_name: str, indices: str = None) -> str:
+	"""
+	Find storeId for a given store name by searching in bik-internal-events.
+	"""
+	try:
+		dsl = {
+			"size": 1,
+			"query": {
+				"bool": {
+					"filter": [
+						{"term": {"storeName.keyword": store_name}}
+					]
+				}
+			},
+			"sort": [{"createdAt": {"order": "desc"}}]
+		}
+		# Search in bik-internal-events index specifically
+		internal_indices = "bik-internal-events"
+		resp = search(cfg, dsl, indices=internal_indices)
+		hits = resp.get("hits", {}).get("hits", [])
+		if hits:
+			store_id = hits[0].get("_source", {}).get("storeId")
+			if store_id:
+				print(f"Found storeId '{store_id}' for store name '{store_name}'", file=sys.stderr)
+				return store_id
+	except Exception as e:
+		print(f"Error finding store ID: {e}", file=sys.stderr)
+	return None
+
+
 def discover_widget_name_field(cfg: ElasticsearchConfig, gte: str, lte: str, indices: str = None) -> str:
 	"""
 	Discover the correct field name for widget name by sampling widgetVisitedSession events.
@@ -283,6 +313,26 @@ def lotus_widget_daily_count(
 	"""
 	Get daily sum of eventProperties.count for widgetVisitedSession events for Lotus widget.
 	"""
+	# First, try to find if widget_value is a store name
+	store_id = find_store_id_by_name(cfg, widget_value, indices)
+	if store_id:
+		# Use the found storeId to filter
+		# Detect if counter event
+		is_counter = detect_counter_event(
+			cfg,
+			event_name="widgetVisitedSession",
+			gte=gte,
+			lte=lte,
+			store_id=store_id,
+			indices=indices,
+		)
+		dsl = build_lotus_widget_daily_dsl_with_store(cfg, gte, lte, is_counter, store_id, indices)
+		resp = search(cfg, dsl, indices=indices)
+		series = extract_daily_series(resp, use_sum_count=is_counter)
+		if not series or not any(row["count"] > 0 for row in series):
+			print(f"Note: Found storeId '{store_id}' for store '{widget_value}', but no widgetVisitedSession events found in the specified time range.", file=sys.stderr)
+		return series
+	
 	# Discover the widget name field if not provided
 	if widget_field:
 		widget_name_field = widget_field
@@ -329,10 +379,13 @@ def lotus_widget_daily_count(
 			raise
 	
 	# If no data found with filters, return empty
-	print(f"Warning: No data found for '{widget_value}' with any filter strategy.", file=sys.stderr)
-	print("Available options:", file=sys.stderr)
-	print("  1. Specify the field: --widget-field 'eventProperties.someField'", file=sys.stderr)
-	print("  2. If 'Lotus' is a storeId, it will be tried automatically", file=sys.stderr)
+	if store_id:
+		print(f"Note: Found storeId '{store_id}' for store '{widget_value}', but no widgetVisitedSession events found in the specified time range.", file=sys.stderr)
+	else:
+		print(f"Warning: No data found for '{widget_value}' with any filter strategy.", file=sys.stderr)
+		print("Available options:", file=sys.stderr)
+		print("  1. Specify the field: --widget-field 'eventProperties.someField'", file=sys.stderr)
+		print("  2. If 'Lotus' is a storeId, it will be tried automatically", file=sys.stderr)
 	return []
 
 
